@@ -1083,7 +1083,7 @@ class Koha extends AbstractIlsDriver {
 						$user->unique_ils_id = $patronId;
 						if (!$user->find(true)) {
 							$cardNumber = $passwordExpirationRow['cardnumber'];
-							$this->findNewUser($cardNumber, '');
+							$user = $this->findNewUser($cardNumber, '');
 						}
 
 						require_once ROOT_DIR . '/sys/Account/PinResetToken.php';
@@ -1094,6 +1094,9 @@ class Koha extends AbstractIlsDriver {
 						$resetToken = '';
 						if ($pinResetToken->insert()) {
 							$resetToken = $pinResetToken->token;
+						} else {
+							global $logger;
+							$logger->log("Failed to insert PinResetToken for user ID: {$user->id} (ILS ID: {$patronId}). DB Error: {$pinResetToken->getLastError()}", Logger::LOG_ERROR);
 						}
 						require_once ROOT_DIR . '/sys/Account/ExpiredPasswordError.php';
 						$result = new ExpiredPasswordError($patronId, $passwordExpirationRow['password_expiration_date'], $resetToken);

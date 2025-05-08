@@ -44,8 +44,17 @@
 				<div id="costSavingsPlaceholder"></div>
 			{/if}
 
+			{if !$initialReadingHistoryLoaded && $historyActive}
+				<div class="alert alert-info">
+					<i class="fas fa-info-circle"></i> {translate text="Your ILS reading history is scheduled to be loaded in the background. This initial process may take a long while, depending on the number of titles to be imported, but you'll have access to your complete reading history soon. Please return to this page later and contact a librarian if the import fails." isPublicFacing=true}
+				</div>
+			{/if}
+
 			<div id="readingHistoryListPlaceholder">
-				{translate text="Loading Reading History, this may take awhile the first time." isPublicFacing=true}
+				<div class="text-center" style="padding-top: 50px;">
+					<i class="fas fa-spinner fa-spin fa-3x" aria-hidden="true"></i> {* Should be replaced with border-spinner on Bootstrap upgrade *}
+					<span class="sr-only">{translate text="Loading..." isPublicFacing=true}</span>
+				</div>
 			</div>
 
 			<script type="text/javascript">

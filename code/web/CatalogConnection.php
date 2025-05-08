@@ -631,47 +631,14 @@ class CatalogConnection {
 			return $result;
 		}
 		if (!$offlineMode) {
-			if (!$patron->initialReadingHistoryLoaded) {
+			if (!$patron->initialReadingHistoryLoaded && !$patron->forceReadingHistoryLoad) {
 				$okToLoadFromIls = true;
 				$masqueradeMode = UserAccount::isUserMasquerading();
 				if ($masqueradeMode) {
 					$okToLoadFromIls = $this->driver->canLoadReadingHistoryInMasqueradeMode();
 				}
 				if ($okToLoadFromIls) {
-					if ($this->driver->hasNativeReadingHistory()) {
-						//Load existing reading history from the ILS
-						$result = $this->driver->getReadingHistory($patron, -1, -1, $sortOption);
-						if ($result['numTitles'] > 0) {
-							foreach ($result['titles'] as $title) {
-								//if ($title['permanentId'] != null) {
-								$userReadingHistoryEntry = new ReadingHistoryEntry();
-								$userReadingHistoryEntry->userId = $patron->id;
-								$userReadingHistoryEntry->groupedWorkPermanentId = $title['permanentId'];
-								$userReadingHistoryEntry->source = $this->accountProfile->recordSource;
-								$userReadingHistoryEntry->sourceId = $title['recordId'];
-								$userReadingHistoryEntry->title = substr($title['title'], 0, 150);
-								$userReadingHistoryEntry->author = substr($title['author'], 0, 75);
-								$userReadingHistoryEntry->format = $title['format'];
-								$userReadingHistoryEntry->checkOutDate = $title['checkout'];
-								if (!empty($title['checkin'])) {
-									$userReadingHistoryEntry->checkInDate = $title['checkin'];
-								} else {
-									$userReadingHistoryEntry->checkInDate = null;
-								}
-								if (empty($title['isIll'])) {
-									$userReadingHistoryEntry->isIll = 0;
-								} else {
-									$userReadingHistoryEntry->isIll = 1;
-								}
-								$userReadingHistoryEntry->deleted = 0;
-								$userReadingHistoryEntry->insert();
-								$userReadingHistoryEntry = null;
-								//}
-							}
-						}
-						$timer->logTime("Finished loading native reading history");
-					}
-					$patron->initialReadingHistoryLoaded = true;
+					$patron->forceReadingHistoryLoad = true;
 					$patron->update();
 				}
 			}

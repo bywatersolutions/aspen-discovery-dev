@@ -53,6 +53,7 @@ class ReadingHistory extends MyAccount {
 				$interface->assign('readingHistoryFilter', '');
 			}
 			$interface->assign('historyActive', $patron->trackReadingHistory);
+			$interface->assign('initialReadingHistoryLoaded', $patron->initialReadingHistoryLoaded);
 			//Check to see if there is an action to perform.
 			if (!empty($_REQUEST['readingHistoryAction'])) {
 				//Perform the requested action

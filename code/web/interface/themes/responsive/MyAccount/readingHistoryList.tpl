@@ -4,28 +4,32 @@
 		{* Reading History Actions *}
 		<div class="row">
 			<form id="readingListForm">
-			<input type="hidden" name="page" value="{$page}">
-			<input type="hidden" name="patronId" id="patronId" value="{$selectedUser}">
-			<input type="hidden" name="readingHistoryAction" id="readingHistoryAction" value="">
-			<div id="readingListActionsTop" class="col-xs-6">
-				<div class="btn-group btn-group-sm">
-					{if $historyActive == true}
-						<button class="btn btn-sm btn-info" onclick="return AspenDiscovery.Account.ReadingHistory.exportListAction()">{translate text="Export To CSV" isPublicFacing=true}</button>
-					{else}
-						<button class="btn btn-sm btn-primary" onclick="return AspenDiscovery.Account.ReadingHistory.optInAction()">{translate text="Start Recording My Reading History" isPublicFacing=true}</button>
-					{/if}
-				</div>
-			</div>
-			{if $historyActive == true}
-				<div class="col-xs-6">
-					<div class="btn-group btn-group-sm pull-right">
-						{if !empty($transList)}
-							<button class="btn btn-sm btn-danger " onclick="return AspenDiscovery.Account.ReadingHistory.deleteAllAction()">{translate text="Delete All" isPublicFacing=true}</button>
+				<input type="hidden" name="page" value="{$page}">
+				<input type="hidden" name="patronId" id="patronId" value="{$selectedUser}">
+				<input type="hidden" name="readingHistoryAction" id="readingHistoryAction" value="">
+				<div class="col-xs-12">
+					<div style="display: flex; flex-wrap: wrap; margin-bottom: 10px;">
+						<div style="margin-right: auto; margin-bottom: 5px;">
+							<div class="btn-group btn-group-sm">
+								{if $historyActive == true}
+									<button class="btn btn-sm btn-info" onclick="return AspenDiscovery.Account.ReadingHistory.exportListAction()">{translate text="Export To CSV" isPublicFacing=true}</button>
+								{else}
+									<button class="btn btn-sm btn-primary" onclick="return AspenDiscovery.Account.ReadingHistory.optInAction()">{translate text="Start Recording My Reading History" isPublicFacing=true}</button>
+								{/if}
+							</div>
+						</div>
+						{if $historyActive == true}
+							<div style="margin-bottom: 5px;">
+								<div class="btn-group btn-group-sm">
+									{if !empty($transList)}
+										<button class="btn btn-sm btn-danger" onclick="return AspenDiscovery.Account.ReadingHistory.deleteAllAction()">{translate text="Delete All" isPublicFacing=true}</button>
+									{/if}
+									<button class="btn btn-sm btn-danger" onclick="return AspenDiscovery.Account.ReadingHistory.optOutAction()">{translate text="Stop Recording My Reading History" isPublicFacing=true}</button>
+								</div>
+							</div>
 						{/if}
-						<button class="btn btn-sm btn-danger" onclick="return AspenDiscovery.Account.ReadingHistory.optOutAction()">{translate text="Stop Recording My Reading History" isPublicFacing=true}</button>
 					</div>
 				</div>
-			{/if}
 			</form>
 
 			<hr>

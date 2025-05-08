@@ -28,6 +28,17 @@ function getUpdates25_Q2_01(): array {
 				"ALTER TABLE themes ADD COLUMN IF NOT EXISTS `placardImageMaxHeight` INT DEFAULT 0",
 			]
 		], //add_placard_image_max_height_to_themes
+		'reading_history_columns_and_index' => [
+			'title' => 'Add Force Reading History Load Flag, Reading History Import Start Datetime, & Index',
+			'description' => 'Add a flag to force immediate loading of reading history for users, a reading history import start datetime, and an index of initial reading history loaded and the previous two new columns.',
+			'continueOnError' => false,
+			'sql' => [
+				"ALTER TABLE user ADD COLUMN IF NOT EXISTS forceReadingHistoryLoad TINYINT(1) DEFAULT 0",
+				"ALTER TABLE user ADD COLUMN IF NOT EXISTS readingHistoryImportStartedAt DATETIME DEFAULT NULL",
+				"DROP INDEX IF EXISTS idx_reading_history_import_status ON user",
+				"CREATE INDEX idx_reading_history_import_status ON user (initialReadingHistoryLoaded, forceReadingHistoryLoad, readingHistoryImportStartedAt)"
+			]
+		], //reading_history_columns_and_index
 
 		//alexander - PTFS-Europe
 		'add_weight_to_campaign_milestones' => [

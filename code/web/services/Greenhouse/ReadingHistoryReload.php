@@ -7,23 +7,34 @@ class Greenhouse_ReadingHistoryReload extends Admin_Admin {
 		global $interface;
 		if (isset($_REQUEST['submit'])) {
 			$barcodesRaw = trim($_REQUEST['barcodes']);
-			$barcodes = preg_split("/\\r\\n|\\r|\\n/", $barcodesRaw);
-			$reloadResults = [];
-			foreach ($barcodes as $barcode) {
-				$foundUserForBarcode = false;
-				foreach (UserAccount::getAccountProfiles() as $name => $accountProfileInfo) {
-					$userToReset = new User();
-					$userToReset->source = $name;
-					$userToReset->ils_barcode = $barcode;
-					if ($userToReset->find(true)) {
-						$foundUserForBarcode = true;
-						$userToReset->initialReadingHistoryLoaded = false;
-						$userToReset->update();
+			if (!empty($barcodesRaw)) {
+				$barcodes = preg_split("/\\r\\n|\\r|\\n/", $barcodesRaw);
+				$reloadResults = [];
+				foreach ($barcodes as $barcode) {
+					$foundUserForBarcode = false;
+					foreach (UserAccount::getAccountProfiles() as $name => $accountProfileInfo) {
+						$userToReset = new User();
+						$userToReset->source = $name;
+						$userToReset->ils_barcode = $barcode;
+						if ($userToReset->find(true)) {
+							$foundUserForBarcode = true;
+							$userToReset->initialReadingHistoryLoaded = false;
+							// Force the reload when the cron job runs.
+							$userToReset->forceReadingHistoryLoad = true;
+							$userToReset->readingHistoryImportStartedAt = null;
+							$userToReset->update();
+						}
 					}
+					$reloadResults[] = [
+						'barcode' => $barcode,
+						'success' => $foundUserForBarcode,
+					];
 				}
+			}
+			else {
 				$reloadResults[] = [
-					'barcode' => $barcode,
-					'success' => $foundUserForBarcode,
+					'barcode' => "No valid barcodes were entered.",
+					'success' => false,
 				];
 			}
 

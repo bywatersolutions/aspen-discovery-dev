@@ -5,24 +5,38 @@
 		</div>
 	</div>
 	{if isset($reloadResults)}
+		{assign var="successBarcodes" value=[]}
+		{assign var="errorBarcodes" value=[]}
+
+		{foreach from=$reloadResults item=reloadResult}
+			{if !empty($reloadResult.success)}
+				{append var=successBarcodes value=$reloadResult.barcode}
+			{else}
+				{append var=errorBarcodes value=$reloadResult.barcode}
+			{/if}
+		{/foreach}
+
 		<div class="row">
 			<div class="col-xs-12">
-				<h2>{translate text="Reload Results" isAdminFacing=true}</h2>
-			</div>
-			<div class="col-xs-12">
-				{foreach from=$reloadResults item=reloadResult}
-					{if !empty($reloadResult.success)}
-						<div class="alert alert-success">{$reloadResult.barcode}</div>
-					{else}
-						<div class="alert alert-danger">{$reloadResult.barcode}</div>
-					{/if}
-				{/foreach}
+				{if $successBarcodes|@count > 0}
+					<div class="alert alert-success">
+						<strong>{translate text="Successfully Scheduled to Reload" isAdminFacing=true}: </strong>
+						{implode(", ", $successBarcodes)}
+					</div>
+				{/if}
+
+				{if $errorBarcodes|@count > 0}
+					<div class="alert alert-danger">
+						<strong>{translate text="Failed to Schedule for Reload" isAdminFacing=true}: </strong>
+						{implode(", ", $errorBarcodes)}
+					</div>
+				{/if}
 			</div>
 		</div>
 	{/if}
 	<div class="row">
 		<div class="col-xs-12">
-			<div class="alert alert-info">{translate text="Enter the barcode(s) for the users to reset reading history for, enter each barcode on it's own line." isAdminFacing=true}</div>
+			<div class="alert alert-info">{translate text="Enter the barcode(s) for the users whose reading history you want to reset. Enter each barcode on its own line.<br>A cron job runs every 5 minutes to import users' reading histories from the ILS, but depending on the number of titles to import, the process may take a while." isAdminFacing=true}</div>
 		</div>
 	</div>
 	<form name="resetReadingHistory" method="post" enctype="multipart/form-data" class="form-horizontal">

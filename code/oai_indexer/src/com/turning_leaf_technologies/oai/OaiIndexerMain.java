@@ -27,6 +27,7 @@ import java.sql.*;
 import java.util.*;
 import java.util.Date;
 import java.util.regex.Pattern;
+import java.io.StringReader;
 
 public class OaiIndexerMain {
 	private static Logger logger;
@@ -266,41 +267,34 @@ public class OaiIndexerMain {
 				headers.put("Pragma", "no-cache");
 
 				WebServiceResponse oaiResponse = NetworkUtils.getURL(listSetsUrl, logger, headers);
+				// Only parse XML if the HTTP call succeeded.
+				if (!oaiResponse.isSuccess()) {
+					logEntry.incErrors("Could not retrieve sets from " + listSetsUrl + " with response code: " + oaiResponse.getResponseCode() + " and response: " + oaiResponse.getMessage());
+				} else {
+					try {
+						Document doc = parseXmlString(oaiResponse.getMessage());
 
-				DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-				factory.setValidating(false);
-				factory.setIgnoringElementContentWhitespace(true);
-				DocumentBuilder builder;
-				try {
-					builder = factory.newDocumentBuilder();
-
-					byte[] soapResponseByteArray = oaiResponse.getMessage().getBytes(StandardCharsets.UTF_8);
-					ByteArrayInputStream soapResponseByteArrayInputStream = new ByteArrayInputStream(soapResponseByteArray);
-					//String contentEncoding = oaiResponse.getResponseHeaderValue("Content-Encoding");
-					InputSource soapResponseInputSource = new InputSource(soapResponseByteArrayInputStream);
-
-					Document doc = builder.parse(soapResponseInputSource);
-
-					Element docElement = doc.getDocumentElement();
-					NodeList listSets = docElement.getElementsByTagName("ListSets");
-					if (listSets.getLength() > 0) {
-						Element listSetsElement = (Element) listSets.item(0);
-						NodeList allSets = listSetsElement.getElementsByTagName("set");
-						for (int i = 0; i < allSets.getLength(); i++) {
-							Node curSetNode = allSets.item(i);
-							if (curSetNode instanceof Element) {
-								NodeList children = curSetNode.getChildNodes();
-								for (int j = 0; j < children.getLength(); j++) {
-									Node curChild = children.item(j);
-									if (curChild instanceof Element && ((Element) curChild).getTagName().equals("setSpec")) {
-										oaiSets.add(curChild.getTextContent().trim());
+						Element docElement = doc.getDocumentElement();
+						NodeList listSets = docElement.getElementsByTagName("ListSets");
+						if (listSets.getLength() > 0) {
+							Element listSetsElement = (Element) listSets.item(0);
+							NodeList allSets = listSetsElement.getElementsByTagName("set");
+							for (int i = 0; i < allSets.getLength(); i++) {
+								Node curSetNode = allSets.item(i);
+								if (curSetNode instanceof Element) {
+									NodeList children = curSetNode.getChildNodes();
+									for (int j = 0; j < children.getLength(); j++) {
+										Node curChild = children.item(j);
+										if (curChild instanceof Element && ((Element) curChild).getTagName().equals("setSpec")) {
+											oaiSets.add(curChild.getTextContent().trim());
+										}
 									}
 								}
 							}
 						}
+					} catch (Exception e) {
+						logEntry.incErrors("Exception loading sets: ", e);
 					}
-				} catch (Exception e) {
-					logEntry.incErrors("Exception loading setts", e);
 				}
 			}else{
 				String[] setsArray = setNames.split(",");
@@ -348,17 +342,7 @@ public class OaiIndexerMain {
 									headers.put("Pragma", "no-cache");
 									oaiResponse = NetworkUtils.getURL(oaiUrl, logger, headers);
 									if (oaiResponse.isSuccess()) {
-										DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-										factory.setValidating(false);
-										factory.setIgnoringElementContentWhitespace(true);
-										DocumentBuilder builder = factory.newDocumentBuilder();
-
-										byte[] soapResponseByteArray = oaiResponse.getMessage().getBytes(StandardCharsets.UTF_8);
-										ByteArrayInputStream soapResponseByteArrayInputStream = new ByteArrayInputStream(soapResponseByteArray);
-										//String contentEncoding = oaiResponse.getResponseHeaderValue("Content-Encoding");
-										InputSource soapResponseInputSource = new InputSource(soapResponseByteArrayInputStream);
-
-										Document doc = builder.parse(soapResponseInputSource);
+										Document doc = parseXmlString(oaiResponse.getMessage());
 
 										Element docElement = doc.getDocumentElement();
 										//Normally we get list records, but if we are at the end of the list OAI may return an
@@ -855,5 +839,29 @@ public class OaiIndexerMain {
 			dateRange = new String[]{textContent}; //no extra format just take as is from Open Archive item
 		}
 		solrRecord.addDates(dateRange, logger, dateFormatting);
+	}
+
+	/**
+	 * Parses a raw XML string into a {@link Document} object after cleaning it.
+	 * Then, it uses a non-validating {@link DocumentBuilder} with whitespace-ignoring enabled
+	 * to parse the cleaned XML into a DOM {@link Document}.
+	 *
+	 * @param xml The raw XML string to parse.
+	 * @return A {@link Document} representing the parsed XML content.
+	 * @throws Exception If an error occurs during parsing.
+	 */
+	private static Document parseXmlString(String xml) throws Exception {
+		// Strip any BOM characters and drop everything before the first XML element.
+		xml = xml.replace("\uFEFF", "");
+		int idx = xml.indexOf('<');
+		if (idx > 0) {
+			xml = xml.substring(idx);
+		}
+		xml = xml.trim();
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setIgnoringElementContentWhitespace(true);
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		return builder.parse(new InputSource(new StringReader(xml)));
 	}
 }

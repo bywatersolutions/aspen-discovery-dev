@@ -39,6 +39,14 @@ function getUpdates25_Q2_01(): array {
 				"CREATE INDEX idx_reading_history_import_status ON user (initialReadingHistoryLoaded, forceReadingHistoryLoad, readingHistoryImportStartedAt)"
 			]
 		], //reading_history_columns_and_index
+		'increase_size_of_collection_codes_to_exclude' => [
+			'title' => 'Increase the Size of the collectionCodesToExclude Column',
+			'description' => 'Increases the size of the collectionCodesToExclude column from VARCHAR(100) to VARCHAR(500).',
+			'sql' => [
+				"ALTER TABLE `library_records_to_include` MODIFY COLUMN `collectionCodesToExclude` varchar(500) NOT NULL DEFAULT ''",
+				"ALTER TABLE `location_records_to_include` MODIFY COLUMN `collectionCodesToExclude` varchar(500) NOT NULL DEFAULT ''"
+			]
+		], //increase_size_of_collection_codes_to_exclude
 
 		//alexander - PTFS-Europe
 		'add_weight_to_campaign_milestones' => [

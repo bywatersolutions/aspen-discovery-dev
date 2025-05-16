@@ -637,11 +637,11 @@ public class GroupedWorkSolr2 extends AbstractGroupedWorkSolr implements Cloneab
 	private Long loadScopedDaysAdded(ItemInfo curItem) {
 		Long daysSinceAdded;
 		if (curItem.isOrderItem() ||
-				curItem.getStatusCode() != null &&
-						(curItem.getGroupedStatus().equals("On Order") ||
-								curItem.getGroupedStatus().equals("In Processing") ||
-								curItem.getDetailedStatus().equals("Coming Soon") || // Falls under the "On Order" facet, so only consider the item's status to find it.
-								curItem.getGroupedStatus().equals("Under Consideration")))
+			curItem.getStatusCode() != null &&
+			(curItem.getGroupedStatus().equals("On Order") ||
+			curItem.getGroupedStatus().equals("In Processing") ||
+			curItem.getDetailedStatus().equals("Coming Soon") || // Falls under the "On Order" facet, so only consider the item's status to find it.
+			curItem.getGroupedStatus().equals("Under Consideration")))
 		{
 			if (curItem.getGroupedStatus().equals("Under Consideration")) {
 				daysSinceAdded = (long)Integer.MAX_VALUE;

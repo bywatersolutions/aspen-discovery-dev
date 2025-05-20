@@ -3619,10 +3619,19 @@ class GroupedWorkDriver extends IndexRecordDriver {
 		//$volumeDataDB->whereAdd('length(relatedItems) > 0');
 		if ($volumeDataDB->find()) {
 			while ($volumeDataDB->fetch()) {
-				$vol = clone $volumeDataDB;
-				// Clean up lingering internal references or resources to avoid memory issues.
-				$vol->__destruct();
-				$volumeData[] = $vol;
+				// Manually copy only the data fields into a fresh object to avoid
+				// DataObject cloning and its consequent memory issues.
+				$info = new IlsVolumeInfo();
+				$info->id = $volumeDataDB->id;
+				$info->recordId = $volumeDataDB->recordId;
+				$info->displayLabel = $volumeDataDB->displayLabel;
+				$info->relatedItems = $volumeDataDB->relatedItems;
+				$info->volumeId = $volumeDataDB->volumeId;
+				$info->displayOrder = $volumeDataDB->displayOrder;
+				$info->setHasLocalItems($volumeDataDB->hasLocalItems());
+				$info->setNeedsIllRequest($volumeDataDB->needsIllRequest());
+				$info->_allItems = $volumeDataDB->getItems();
+				$volumeData[] = $info;
 			}
 		}
 		$volumeDataDB->__destruct();

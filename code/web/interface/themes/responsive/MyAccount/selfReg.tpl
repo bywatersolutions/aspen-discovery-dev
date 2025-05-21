@@ -91,3 +91,14 @@
 
 </script>
 {/if}
+{literal}
+	<script type="text/javascript">
+		// Clear form data when navigating back so user info is not retained.
+		window.addEventListener('pageshow', function() {
+			var forms = document.querySelectorAll('form[id^="objectEditor"]');
+			for (var i = 0; i < forms.length; i++) {
+				forms[i].reset();
+			}
+		});
+	</script>
+{/literal}

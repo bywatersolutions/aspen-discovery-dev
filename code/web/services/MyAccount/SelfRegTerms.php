@@ -2,6 +2,9 @@
 
 class SelfRegTerms extends Action {
 	function launch($msg = null) {
+		header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+		header("Pragma: no-cache");
+		header("Expires: 0");
 		global $interface;
 		global $library;
 

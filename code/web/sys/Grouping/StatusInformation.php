@@ -275,7 +275,7 @@ class Grouping_StatusInformation {
 					if ($this->getAvailableCopies() == 1) {
 						$numberOfCopiesMessage .= '1 copy available';
 					} elseif ($this->getAvailableCopies() > 1) {
-						$numberOfCopiesMessage .= '%1% copies available';
+						$numberOfCopiesMessage .= '%4% copies available';
 					}
 				}
 
@@ -328,6 +328,7 @@ class Grouping_StatusInformation {
 			1 => $this->getCopies(),
 			2 => $this->getNumHolds(),
 			3 => $this->getOnOrderCopies(),
+			4 => $this->getAvailableCopies(),
 			'isPublicFacing' => true,
 		]);
 	}

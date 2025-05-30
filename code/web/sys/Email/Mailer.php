@@ -131,10 +131,12 @@ class Mailer {
 		}
 
 		$response = $amazonSesSettings->sendEmail($message, false, false);
-		if ($response == false) {
+		if (!$response) {
+			$logger->log("Amazon SES send failed no response", Logger::LOG_ERROR);
 			return false;
 		} else {
 			if (isset($response->error) && count($response->error) > 0) {
+				$logger->log('Amazon SES send failed: ' . print_r($response->error, true), Logger::LOG_ERROR);
 				return false;
 			} else {
 				return true;

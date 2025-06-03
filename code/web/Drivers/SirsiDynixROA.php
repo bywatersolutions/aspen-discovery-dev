@@ -97,9 +97,6 @@ class SirsiDynixROA extends HorizonAPI {
 		if (!empty($sessionToken)) {
 			$webServiceURL = $this->getWebServiceURL();
 			$includeFields = urlEncode("firstName,lastName,privilegeExpiresDate,preferredAddress,preferredName,address1,address2,address3,library,primaryPhone,profile,pin,blockList{owed}");
-			// Symphony needs time to process the full information of the user when registering,
-			// so add a delay to ensure the results array is populated.
-			usleep(500000);
 			$lookupMyAccountInfoResponse = $this->getWebServiceResponse('findNewUser', $webServiceURL . '/user/patron/search?q=ID:' . $patronBarcode . '&rw=1&ct=1&includeFields=' . $includeFields, null, $sessionToken);
 			if (!empty($lookupMyAccountInfoResponse->result) && $lookupMyAccountInfoResponse->totalResults == 1) {
 				$userID = $lookupMyAccountInfoResponse->result[0]->key;
@@ -808,6 +805,9 @@ class SirsiDynixROA extends HorizonAPI {
 						'barcode' => $barcode,
 						'requirePinReset' => true,
 					];
+					// Symphony needs time to process the full information of the user when registering,
+					// so add a delay to ensure the results array is populated when finding the user.
+					usleep(500000);
 					$newUser = $this->findNewUser($barcode, null);
 					if ($newUser != null) {
 						$selfRegResult['newUser'] = $newUser;

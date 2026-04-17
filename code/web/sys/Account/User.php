@@ -1859,7 +1859,7 @@ class User extends DataObject {
 	 * @param string $source
 	 * @return Checkout[]
 	 */
-	public function getCheckouts(bool $includeLinkedUsers = true, string $source = 'all', bool $isNightlyUpdate = false): array {
+	public function getCheckouts(bool $includeLinkedUsers = true, string $source = 'all'): array {
 		require_once ROOT_DIR . '/sys/User/Checkout.php';
 
 		$checkoutsToReturn = [];
@@ -1868,7 +1868,7 @@ class User extends DataObject {
 		global $offlineMode;
 		if ($this->hasIlsConnection() && !$offlineMode) {
 			if ($source == 'all' || $source == 'ils') {
-				$ilsCheckouts = $this->getCatalogDriver()->getCheckouts($this, false, [ "isNightlyUpdate" => $isNightlyUpdate ]);
+				$ilsCheckouts = $this->getCatalogDriver()->getCheckouts($this);
 				$checkoutsToReturn = $ilsCheckouts;
 				$timer->logTime("Loaded transactions from catalog. $this->id");
 			}

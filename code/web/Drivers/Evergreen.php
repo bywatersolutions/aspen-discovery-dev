@@ -24,11 +24,10 @@ class Evergreen extends AbstractIlsDriver {
 	 * This is responsible for retrieving all checkouts (i.e. checked out items)
 	 * by a specific patron.
 	 *
-	 * @param User $patron       The user for which to load transactions.
-	 * @param array $options     Additional options
+	 * @param User $patron The user for which to load transactions.
 	 * @return Checkout[] Array of the patron's transactions on success.
 	 */
-	public function getCheckouts(User $patron, array $options = []): array {
+	public function getCheckouts(User $patron): array {
 		require_once ROOT_DIR . '/sys/User/Checkout.php';
 		$checkedOutTitles = [];
 

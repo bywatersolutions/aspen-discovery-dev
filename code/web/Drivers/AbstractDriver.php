@@ -2,6 +2,8 @@
 
 
 abstract class AbstractDriver {
+	protected bool $isNightlyUpdate = false;
+
 	public abstract function hasNativeReadingHistory(): bool;
 
 	public function canLoadReadingHistoryInMasqueradeMode() : bool {
@@ -30,12 +32,11 @@ abstract class AbstractDriver {
 	 * This is responsible for retrieving all checkouts (i.e. checked out items)
 	 * by a specific patron.
 	 *
-	 * @param User $patron       The user to load transactions for
-	 * @param array $option      Additional options, currently used for Koha/isNightlyUpdate
+	 * @param User $patron The user to load transactions for
 	 * @return Checkout[]        Array of the patron's transactions on success
 	 * @access public
 	 */
-	public abstract function getCheckouts(User $patron, array $options): array;
+	public abstract function getCheckouts(User $patron): array;
 
 	/**
 	 * @return boolean true if the driver can renew all titles in a single pass
@@ -246,5 +247,9 @@ abstract class AbstractDriver {
 
 		$accountSummary->clearCheckoutsStale();
 		return $activeCheckouts;
+	}
+
+	public function setNightlyUpdateStatus(bool $nightly): void {
+		$this->isNightlyUpdate = $nightly;
 	}
 }

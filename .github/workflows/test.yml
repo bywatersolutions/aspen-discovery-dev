@@ -15,6 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     #   - uses: php-actions/composer@v6
+    - run: ls sites
 
     - name: Execute tests
       uses: php-actions/phpunit@master

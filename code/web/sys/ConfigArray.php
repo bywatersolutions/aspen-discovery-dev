@@ -167,6 +167,8 @@ function readConfig() : array {
 		}
 
 	}
+	// TODO delete this debug output
+	echo($fullServerName);
 
 	$server = $fullServerName;
 	$serverParts = explode('.', $server);

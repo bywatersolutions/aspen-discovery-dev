@@ -1,4 +1,4 @@
-name: PHP Composer
+name: PHPUnit tests
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
       with:
         version: 10
         php_version: 8.2
-        bootstrap: vendor/autoload.php
+        bootstrap: tests/phpunit/phpUnitBootstrap.php
         configuration: tests/phpunit/phpunit.xml
         args: --coverage-text
     # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"

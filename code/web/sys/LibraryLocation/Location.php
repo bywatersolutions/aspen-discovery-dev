@@ -3166,7 +3166,7 @@ class Location extends DataObject {
 			$apiInfo['theme'] = $this->getPrimaryTheme();
 		}
 		if ((empty($this->homeLink) || $this->homeLink == "default" || $this->homeLink == "/")) {
-			if ($parentLibrary == null) {
+			if ($parentLibrary == null || $parentLibrary->homeLink == "default") {
 				$apiInfo['homeLink'] = '';
 			} else {
 				$apiInfo['homeLink'] = $parentLibrary->homeLink;

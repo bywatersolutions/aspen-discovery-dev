@@ -387,13 +387,17 @@ class ACISpeedpaySetting extends DataObject {
 				'billerId' => $this->billerId,
 				'billerAccountId' => $billerAccount,
 			),
-			'serviceFeeAmount' => $serviceFee,
 			'principalAmount' => array(
 				'value' => $paymentAmount,
 				'currencyCode' => $currencyCode,
 				'precision' => 2,
 			),
 		));
+		$postData['serviceFeeAmount'] = array(
+			'value' => $serviceFee,
+			'currencyCode' => $currencyCode,
+			'precision' => 2,
+		);
 
 		$paymentRequest->addCustomHeaders([
 			'Accept: application/json',
@@ -411,7 +415,7 @@ class ACISpeedpaySetting extends DataObject {
 			if (str_starts_with($paymentResponse['message']['code'], 'S')) {
 				$ccNumber = $paymentResponse['fundingAccountSummary']['name'];
 				$confirmationCode = $paymentResponse['confirmationCode'];
-				$totalPaid = $paymentResponse['accountTransactionResults'][0]['principalAmount']['value'] + $paymentResponse['accountTransactionResults'][0]['serviceFeeAmount']['value'];
+				$totalPaid = $paymentResponse['accountTransactionResults'][0]['principalAmount']['value'] + $paymentResponse['serviceFeeAmount']['value'];
 				$payment->transactionId = $paymentResponse['confirmationCode'];
 				$payment->orderId = $paymentResponse['id'];
 				$payment->totalPaid = number_format($totalPaid / 100, 2, '.', '');

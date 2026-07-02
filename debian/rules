@@ -1,0 +1,38 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+# Nothing to compile: the jars are prebuilt and committed upstream.
+override_dh_auto_configure override_dh_auto_build override_dh_auto_test:
+
+# Generate one unit per background module from the master template. The
+# module list is derived from the committed jars so a new module upstream
+# only needs its jar; cron, oai_indexer and reindexer are cron-driven one
+# shot jobs and marcMergeUtility is a command line tool, none are daemons.
+execute_before_dh_install:
+	mkdir -p debian/systemd-units
+	set -e; for dir in code/*/; do \
+		module=$$(basename "$$dir"); \
+		case "$$module" in cron|oai_indexer|reindexer|marcMergeUtility) continue ;; esac; \
+		[ -f "$$dir$$module.jar" ] || continue; \
+		sed "s/@MODULE@/$$module/g" 'install/systemd/aspen-module@.service.in' \
+			> "debian/systemd-units/aspen-$$module@.service"; \
+	done
+
+# Development sources are not needed at runtime; the jars are prebuilt
+execute_after_dh_install:
+	find debian/aspen-discovery/usr/local/aspen-discovery/code \
+		-mindepth 2 -maxdepth 2 -type d -name src -exec rm -r {} +
+	find debian/aspen-discovery/usr/local/aspen-discovery -name '*.iml' -delete
+
+# Unit enablement is handled per site in the postinst (and by
+# aspen-create-site), never automatically for template units.
+override_dh_installsystemd:
+	dh_installsystemd --no-enable --no-start
+
+# 400MB of jars, fonts and bundled Solr: skip slow, pointless steps
+override_dh_strip override_dh_strip_nondeterminism override_dh_dwz:
+
+override_dh_compress:
+	dh_compress -X.MD

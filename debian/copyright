@@ -1,0 +1,28 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Aspen Discovery
+Source: https://github.com/Aspen-Discovery/aspen-discovery
+
+Comment:
+ This is an initial packaging copyright file. Aspen bundles many third
+ party components (Solr, java libraries including mysql-connector-java,
+ PHP libraries, javascript libraries, fonts, and legacy MaxMind GeoIP
+ data); a full license audit is required before distributing this package
+ from a public repository.
+
+Files: *
+Copyright: Turning Leaf Technologies and Aspen Discovery contributors
+License: GPL-2
+ On Debian systems, the complete text of the GNU General Public License
+ version 2 can be found in /usr/share/common-licenses/GPL-2.
+
+Files: sites/default/solr-*/*
+Copyright: The Apache Software Foundation
+License: Apache-2.0
+ On Debian systems, the complete text of the Apache License version 2.0
+ can be found in /usr/share/common-licenses/Apache-2.0.
+
+Files: debian/*
+Copyright: 2026 ByWater Solutions
+License: GPL-2
+ On Debian systems, the complete text of the GNU General Public License
+ version 2 can be found in /usr/share/common-licenses/GPL-2.

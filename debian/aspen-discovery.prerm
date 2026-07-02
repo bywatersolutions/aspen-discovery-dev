@@ -1,0 +1,16 @@
+#!/bin/sh
+
+set -e
+
+# On upgrade nothing is stopped here; the postinst restarts the site targets,
+# which keeps the downtime to the restart itself.
+if [ "$1" = remove ] && [ -d /run/systemd/system ]; then
+    for site in $(aspen-list 2>/dev/null); do
+        aspen-disable-site "$site" || true
+    done
+    systemctl disable aspen.target >/dev/null 2>&1 || true
+fi
+
+#DEBHELPER#
+
+exit 0

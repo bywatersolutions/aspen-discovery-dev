@@ -1,0 +1,21 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+    install)
+        # Refuse to silently take over a git based install; dpkg would
+        # otherwise overwrite the checkout in place and leave .git and years
+        # of stale files behind.
+        if [ -d /usr/local/aspen-discovery/.git ] && [ -z "$ASPEN_FORCE_ADOPT" ]; then
+            echo "ERROR: /usr/local/aspen-discovery is a git based install." >&2
+            echo "Follow the migration steps in README.Debian (aspen-migrate-from-git)," >&2
+            echo "or set ASPEN_FORCE_ADOPT=1 to install over it anyway." >&2
+            exit 1
+        fi
+        ;;
+esac
+
+#DEBHELPER#
+
+exit 0

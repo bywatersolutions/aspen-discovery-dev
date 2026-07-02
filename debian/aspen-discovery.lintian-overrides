@@ -1,0 +1,11 @@
+# Aspen hardcodes /usr/local/aspen-discovery throughout the shipped PHP,
+# templates and helper scripts, so v1 of the package installs there. This
+# package targets a private apt repository, not the Debian archive.
+aspen-discovery: dir-or-file-in-usr-local *
+
+# The java daemons ship as prebuilt jars committed upstream
+aspen-discovery: codeless-jar *
+
+# Bundled Solr and vendored java/php/js libraries are part of the upstream
+# distribution model
+aspen-discovery: embedded-library *

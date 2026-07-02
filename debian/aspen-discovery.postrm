@@ -1,0 +1,27 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+    remove)
+        if [ -d /run/systemd/system ]; then
+            systemctl daemon-reload || true
+        fi
+        ;;
+    purge)
+        # Clean up unit enablement symlinks left dangling now that the unit
+        # files are gone
+        if [ -d /etc/systemd/system ]; then
+            find /etc/systemd/system -name 'aspen*' -xtype l -delete 2>/dev/null || true
+            find /etc/systemd/system -depth -name 'aspen*' -type d -empty -delete 2>/dev/null || true
+        fi
+        rm -rf /usr/local/aspen-discovery/tmp
+        # Never delete library data automatically
+        echo "Site configuration in /usr/local/aspen-discovery/sites/, data in" >&2
+        echo "/data/aspen-discovery/ and logs in /var/log/aspen-discovery/ were kept." >&2
+        ;;
+esac
+
+#DEBHELPER#
+
+exit 0

@@ -1,0 +1,5 @@
+aspen-discovery (26.08.00~dev1) bookworm; urgency=medium
+
+  * Initial Debian packaging of Aspen Discovery with native systemd units.
+
+ -- Kyle M Hall <kyle@bywatersolutions.com>  Thu, 02 Jul 2026 14:19:23 -0400

@@ -1,0 +1,55 @@
+Source: aspen-discovery
+Section: web
+Priority: optional
+Maintainer: ByWater Solutions <kyle@bywatersolutions.com>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.6.2
+Rules-Requires-Root: no
+Homepage: https://aspendiscovery.org
+Vcs-Git: https://github.com/Aspen-Discovery/aspen-discovery.git
+
+Package: aspen-discovery
+Architecture: all
+Depends: ${misc:Depends},
+ adduser,
+ apache2,
+ cron | cron-daemon,
+ mariadb-client,
+ openjdk-17-jre-headless | java17-runtime-headless,
+ libapache2-mod-php8.4,
+ php8.4,
+ php8.4-cli,
+ php8.4-curl,
+ php8.4-gd,
+ php8.4-imagick,
+ php8.4-intl,
+ php8.4-ldap,
+ php8.4-mbstring,
+ php8.4-mcrypt,
+ php8.4-mysql,
+ php8.4-pgsql,
+ php8.4-soap,
+ php8.4-ssh2,
+ php8.4-xml,
+ php8.4-zip,
+ procps,
+ systemd,
+ pigz,
+ rsyslog,
+ zip
+Recommends: mariadb-server,
+ certbot,
+ python3-certbot-apache,
+ logrotate
+Suggests: clamav, clamav-daemon
+Description: library discovery layer for Koha and other ILSs
+ Aspen Discovery is a full featured discovery system for libraries with
+ catalog search, e-content integrations, events and website indexing.
+ .
+ This package ships the PHP web application, the java extract and index
+ daemons, a bundled Solr, the site templates, and administration tools.
+ Each site's Solr and background daemons run as their own systemd units,
+ grouped by an aspen@<site>.target per site and a global aspen.target.
+ .
+ The PHP 8.4 dependencies come from the deb.sury.org repository, which
+ must be configured before installing this package. See README.Debian.

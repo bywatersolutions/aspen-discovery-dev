@@ -1,0 +1,65 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+    configure)
+        # Users and groups (mirrors install/setup_aspen_user_debian.sh)
+        getent group aspen_apache >/dev/null || addgroup --system aspen_apache
+        getent passwd aspen >/dev/null ||
+            adduser --disabled-password --gecos "Aspen Discovery" aspen
+        adduser aspen aspen_apache >/dev/null || true
+        adduser www-data aspen_apache >/dev/null || true
+        getent passwd solr >/dev/null ||
+            adduser --system --group --shell /bin/bash \
+                --home /usr/local/aspen-discovery/sites/default --no-create-home solr
+        adduser solr aspen >/dev/null || true
+
+        # Directories
+        install -d -o aspen -g aspen_apache -m 775 /data/aspen-discovery
+        install -d -o aspen -g aspen -m 755 /var/log/aspen-discovery
+        install -d -o www-data -g aspen_apache -m 755 /usr/local/aspen-discovery/tmp
+        touch /var/log/aspen-discovery/clam_av.log
+        chown root:aspen_apache /var/log/aspen-discovery/clam_av.log
+
+        # dpkg unpacks the tree as root on every install and upgrade
+        aspen-site-perms --global
+
+        # Apache and PHP
+        if command -v a2enmod >/dev/null; then
+            a2enmod -q rewrite || true
+        fi
+        if command -v phpenmod >/dev/null; then
+            phpenmod -v 8.4 aspen-discovery || true
+        fi
+
+        # The mariadb tuning file is templated by createSite.php, so it is
+        # installed once and never overwritten rather than being a conffile
+        if [ -d /etc/mysql/mariadb.conf.d ] && [ ! -e /etc/mysql/mariadb.conf.d/60-aspen.cnf ]; then
+            cp /usr/local/aspen-discovery/install/60-aspen.cnf /etc/mysql/mariadb.conf.d/60-aspen.cnf
+        fi
+
+        if [ -d /run/systemd/system ]; then
+            systemctl daemon-reload
+            for site in $(aspen-list); do
+                # Refresh the per-site solr config sets shipped in
+                # data_dir_setup (what update_solr_files_debian.sh does today)
+                if [ -d "/data/aspen-discovery/$site/solr7" ]; then
+                    cp -r /usr/local/aspen-discovery/data_dir_setup/solr7 "/data/aspen-discovery/$site/"
+                    chown -R solr:aspen "/data/aspen-discovery/$site/solr7"
+                fi
+                aspen-enable-site "$site"
+                deb-systemd-invoke restart "aspen@$site.target" || true
+            done
+            systemctl enable aspen.target >/dev/null 2>&1 || true
+        fi
+
+        if [ -n "$2" ]; then
+            echo "aspen-discovery upgraded: run Database Maintenance from the admin UI for each site." >&2
+        fi
+        ;;
+esac
+
+#DEBHELPER#
+
+exit 0

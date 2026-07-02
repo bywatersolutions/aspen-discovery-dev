@@ -1,0 +1,4 @@
+tar-ignore = ".git"
+tar-ignore = ".github"
+tar-ignore = "docker"
+tar-ignore = "tests"

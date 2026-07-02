@@ -1,0 +1,88 @@
+Aspen Discovery for Debian
+==========================
+
+Prerequisites
+-------------
+
+The PHP 8.4 dependencies come from the deb.sury.org repository, which must
+be configured before installing this package:
+
+    apt-get install -y wget gpg lsb-release
+    install -d /etc/apt/keyrings
+    wget -q -O - https://packages.sury.org/php/apt.gpg | gpg --yes -o /etc/apt/keyrings/sury.gpg --dearmor
+    echo "deb [signed-by=/etc/apt/keyrings/sury.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/sury.list
+    apt-get update
+
+The database can run locally (install the recommended mariadb-server) or on
+a remote host; only mariadb-client is required on this server.
+
+Creating a site
+---------------
+
+Write a site config ini (see the variables read at the top of
+/usr/local/aspen-discovery/install/createSite.php), then:
+
+    aspen-create-site mysite.ini
+
+This creates the site under /usr/local/aspen-discovery/sites/<sitename>,
+sets up the database, and enables and starts the site's services.
+
+Service management
+------------------
+
+Each site's Solr and background java daemons run as their own systemd
+units, grouped per site:
+
+    systemctl status aspen@<sitename>.target      # the whole site
+    aspen-svc status <sitename>                   # same, with a unit list
+    aspen-svc restart <sitename> solr
+    aspen-svc stop <sitename> koha_export
+    journalctl -u 'aspen-*@<sitename>*' -f
+
+Which module daemons run is controlled by the Modules page in the admin UI;
+aspen-sync-modules aligns the units with the database within five minutes
+(immediately once the admin UI hook is in place). The Solr heap can be set
+per site with 'solrMemory' in the [Index] section of config.ini (default
+3g); other limits go in standard systemd drop-ins, e.g.
+/etc/systemd/system/aspen-solr@<sitename>.service.d/override.conf.
+
+The cron keep-alive scripts (checkSolr.php, checkBackgroundProcesses.php)
+are not used on systemd servers: the units supervise the daemons, and the
+keep-alive lines are stripped from new sites' crontabs.
+
+Migrating a git based install
+-----------------------------
+
+Existing servers installed from a git checkout must be migrated
+deliberately; the package refuses to install over /usr/local/aspen-discovery
+when a .git directory is present. See aspen-migrate-from-git(8):
+
+    1. Move the old tree aside:
+       mv /usr/local/aspen-discovery /usr/local/aspen-discovery.pre-deb
+    2. apt-get install aspen-discovery
+    3. aspen-migrate-from-git /usr/local/aspen-discovery.pre-deb
+    4. Verify the sites, then delete the .pre-deb tree.
+
+/data/aspen-discovery and /var/log/aspen-discovery are untouched by the
+migration and by package removal.
+
+Upgrades
+--------
+
+    apt-get install aspen-discovery=<version>
+
+The postinst refreshes the per-site Solr config sets, fixes permissions and
+restarts the site targets. Run Database Maintenance from the admin UI for
+each site afterwards, the same as after a git based upgrade. Do not use the
+"complete update" from the admin UI on a package managed server.
+
+Optional pieces from the legacy installer
+-----------------------------------------
+
+- mysql_secure_installation and the MariaDB tuning in
+  /etc/mysql/mariadb.conf.d/60-aspen.cnf (installed once, adjust
+  innodb_buffer_pool_size to your RAM).
+- ClamAV (suggested packages clamav, clamav-daemon).
+- The GD rebuild with libraqm for complex text rendering
+  (/usr/local/aspen-discovery/install/rebuild_gd_raqm.sh) is optional and
+  not run by the package.

@@ -1,0 +1,64 @@
+#!/bin/sh
+
+# aspen-sync-modules -- align the systemd module units for a site with the
+# modules enabled in the site's database
+#
+# usage: aspen-sync-modules <site> | --all
+#
+# Run by aspen-sync-modules@<site>.service, which is triggered when the site
+# target starts, every five minutes by a timer, and immediately by a path
+# unit when the admin UI touches the module_change.flag file.
+
+set -e
+. /usr/share/aspen-discovery/aspen-functions.sh
+
+sync_site() {
+    site=$1
+
+    # Remove the trigger flag first so a change made while we run re-triggers
+    rm -f "$ASPEN_DATA_DIR/$site/module_change.flag"
+
+    if ! get_db_creds "$site"; then
+        echo "$(basename "$0"): no database credentials for '$site', skipping" >&2
+        return 0
+    fi
+
+    if ! enabled_modules=$(MYSQL_PWD="$ASPEN_DB_PASSWORD" mysql --batch --skip-column-names \
+        --host="$ASPEN_DB_HOST" --port="$ASPEN_DB_PORT" --user="$ASPEN_DB_USER" "$ASPEN_DB_NAME" \
+        --execute="SELECT DISTINCT backgroundProcess FROM modules WHERE enabled = 1 AND backgroundProcess != ''"); then
+        echo "$(basename "$0"): cannot query the database for '$site', leaving units unchanged" >&2
+        return 0
+    fi
+
+    for module in $(get_module_templates); do
+        unit="aspen-$module@$site.service"
+        if echo "$enabled_modules" | grep -qx "$module"; then
+            systemctl enable --now "$unit" ||
+                echo "$(basename "$0"): failed to enable $unit" >&2
+        elif systemctl is-enabled --quiet "$unit" 2>/dev/null; then
+            systemctl disable --now "$unit" ||
+                echo "$(basename "$0"): failed to disable $unit" >&2
+        fi
+    done
+
+    for module in $enabled_modules; do
+        if [ ! -f "/usr/lib/systemd/system/aspen-$module@.service" ]; then
+            echo "$(basename "$0"): module '$module' is enabled for '$site' but has no systemd unit" >&2
+        fi
+    done
+}
+
+case "$1" in
+    --all)
+        for site in $(get_sites); do
+            sync_site "$site"
+        done
+        ;;
+    -* | '')
+        die "usage: $(basename "$0") <site> | --all"
+        ;;
+    *)
+        is_site "$1" || die "no such site '$1'"
+        sync_site "$1"
+        ;;
+esac

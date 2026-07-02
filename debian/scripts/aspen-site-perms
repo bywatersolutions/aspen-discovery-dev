@@ -1,0 +1,118 @@
+#!/bin/sh
+
+# aspen-site-perms -- set the ownership and permissions Aspen expects
+#
+# usage: aspen-site-perms <site> | --all | --global
+#
+# Codifies install/setup_aspen_user_debian.sh and
+# install/updateSitePermissions_debian.sh. The --global form covers the
+# shipped code tree and top level data/log directories and is run from the
+# package postinst; the per-site form is run at site creation and migration.
+
+set -e
+. /usr/share/aspen-discovery/aspen-functions.sh
+
+global_perms() {
+    chown aspen:aspen "$ASPEN_HOME"/* 2>/dev/null || true
+    chown -R aspen:aspen "$ASPEN_HOME/code"
+    chown -R aspen:aspen "$ASPEN_HOME/data_dir_setup"
+    chown -R aspen:aspen "$ASPEN_HOME/install"
+    chown -R www-data:aspen_apache "$ASPEN_HOME/code/web"
+    [ -d "$ASPEN_HOME/code/web/files" ] && chmod -R 755 "$ASPEN_HOME/code/web/files"
+    [ -d "$ASPEN_HOME/code/web/fonts" ] && chmod -R 755 "$ASPEN_HOME/code/web/fonts"
+    [ -d "$ASPEN_HOME/code/web/sitemaps" ] && chown -R aspen:aspen_apache "$ASPEN_HOME/code/web/sitemaps"
+    [ -d "$ASPEN_HOME/tmp" ] && chown -R www-data:aspen_apache "$ASPEN_HOME/tmp"
+    chown -R www-data:aspen_apache "$ASPEN_SITES_DIR"
+    chown -R aspen:aspen_apache "$ASPEN_SITES_DIR/default"
+    [ -d "$ASPEN_SITES_DIR/default/solr-8.11.2" ] && chown -R solr:solr "$ASPEN_SITES_DIR/default/solr-8.11.2"
+    [ -d "$ASPEN_SITES_DIR/template.linux" ] && chown -R aspen:aspen "$ASPEN_SITES_DIR/template.linux"
+
+    # Top level data and log dirs only; per-site trees are handled per site
+    if [ -d "$ASPEN_DATA_DIR" ]; then
+        chown aspen:aspen_apache "$ASPEN_DATA_DIR"
+        chmod 775 "$ASPEN_DATA_DIR"
+        if [ -d "$ASPEN_DATA_DIR/accelerated_reader" ]; then
+            chown -R root:aspen_apache "$ASPEN_DATA_DIR/accelerated_reader"
+            chmod -R 775 "$ASPEN_DATA_DIR/accelerated_reader"
+        fi
+    fi
+    [ -d "$ASPEN_LOG_DIR" ] && chown aspen:aspen "$ASPEN_LOG_DIR"
+
+    # Re-apply the per-site ownership inside sites/ that the recursive
+    # www-data chown above just clobbered
+    for site in $(get_sites); do
+        site_conf_perms "$site"
+    done
+}
+
+site_conf_perms() {
+    site=$1
+    site_dir=$ASPEN_SITES_DIR/$site
+
+    chown root:root "$site_dir"
+    chown root:root "$site_dir"/httpd-*.conf 2>/dev/null || true
+    if [ -f "$site_dir/$site.sh" ]; then
+        chown aspen:aspen "$site_dir/$site.sh"
+        chmod +x "$site_dir/$site.sh"
+    fi
+    chown aspen:aspen_apache "$site_dir/conf"
+    chown aspen:aspen_apache "$site_dir/conf"/config* 2>/dev/null || true
+    chown aspen:aspen "$site_dir/conf"/log4j* 2>/dev/null || true
+    if [ -f "$site_dir/conf/crontab_settings.txt" ]; then
+        chown root:root "$site_dir/conf/crontab_settings.txt"
+        chmod 0644 "$site_dir/conf/crontab_settings.txt"
+    fi
+    if [ -f "$site_dir/conf/passkey" ]; then
+        chown aspen:aspen_apache "$site_dir/conf/passkey"
+        chmod 440 "$site_dir/conf/passkey"
+    fi
+}
+
+site_perms() {
+    site=$1
+
+    site_conf_perms "$site"
+
+    data_dir=$ASPEN_DATA_DIR/$site
+    if [ -d "$data_dir" ]; then
+        chown -R aspen:aspen_apache "$data_dir"
+        chmod -R 775 "$data_dir"
+        [ -d "$data_dir/solr7" ] && chown -R solr:aspen "$data_dir/solr7"
+        [ -d "$data_dir/sql_backup" ] && chown -R root:root "$data_dir/sql_backup"
+    fi
+
+    log_dir=$ASPEN_LOG_DIR/$site
+    if [ -d "$log_dir" ]; then
+        chmod 755 "$log_dir"
+        if [ -d "$log_dir/logs" ]; then
+            chown -R aspen:aspen "$log_dir/logs"
+            chmod -R 755 "$log_dir/logs"
+        fi
+        [ -d "$log_dir/solr" ] && chown -R solr:solr "$log_dir/solr"
+    fi
+
+    if [ -f "$ASPEN_HOME/install/updateAllSideloadPermissions.php" ] && command -v php >/dev/null; then
+        php "$ASPEN_HOME/install/updateAllSideloadPermissions.php" "$site" debian || true
+    fi
+
+    return 0
+}
+
+case "$1" in
+    --global)
+        global_perms
+        ;;
+    --all)
+        global_perms
+        for site in $(get_sites); do
+            site_perms "$site"
+        done
+        ;;
+    -* | '')
+        die "usage: $(basename "$0") <site> | --all | --global"
+        ;;
+    *)
+        is_site "$1" || die "no such site '$1'"
+        site_perms "$1"
+        ;;
+esac

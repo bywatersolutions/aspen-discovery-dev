@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# aspen-list -- list the Aspen Discovery sites on this server
+#
+# usage: aspen-list [--enabled] [--local-solr]
+
+set -e
+. /usr/share/aspen-discovery/aspen-functions.sh
+
+enabled_only=no
+local_solr_only=no
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --enabled) enabled_only=yes ;;
+        --local-solr) local_solr_only=yes ;;
+        -h | --help)
+            echo "usage: $(basename "$0") [--enabled] [--local-solr]"
+            exit 0
+            ;;
+        *) die "unknown option '$1'" ;;
+    esac
+    shift
+done
+
+for site in $(get_sites); do
+    if [ "$enabled_only" = yes ]; then
+        systemctl is-enabled --quiet "aspen@$site.target" 2>/dev/null || continue
+    fi
+    if [ "$local_solr_only" = yes ]; then
+        is_local_solr "$site" || continue
+    fi
+    echo "$site"
+done

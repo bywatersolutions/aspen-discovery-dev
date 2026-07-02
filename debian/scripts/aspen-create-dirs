@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# aspen-create-dirs -- create the runtime directories for a site
+#
+# usage: aspen-create-dirs <site>
+#
+# Run by aspen-create-dirs@<site>.service before the other units of the site
+# start, so /run/aspen and the log directories always exist.
+
+set -e
+. /usr/share/aspen-discovery/aspen-functions.sh
+
+site=$1
+[ -n "$site" ] || die "usage: $(basename "$0") <site>"
+is_site "$site" || die "no such site '$site'"
+
+install -d -m 755 -o root -g root "$ASPEN_RUN_DIR"
+install -d -m 750 -o root -g solr "$ASPEN_RUN_DIR/$site"
+install -d -m 775 -o aspen -g aspen_apache "$ASPEN_LOG_DIR/$site"
+install -d -m 755 -o aspen -g aspen "$ASPEN_LOG_DIR/$site/logs"
+install -d -m 755 -o solr -g solr "$ASPEN_LOG_DIR/$site/solr"

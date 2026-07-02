@@ -1,0 +1,55 @@
+#!/bin/sh
+
+# aspen-svc -- manage Aspen Discovery services via systemctl
+#
+# usage: aspen-svc <start|stop|restart|status|enable|disable> <site> [component]
+#
+# With no component the command applies to the whole site
+# (aspen@<site>.target). The component can be 'solr' or a background module
+# name such as koha_export.
+
+set -e
+. /usr/share/aspen-discovery/aspen-functions.sh
+
+usage() {
+    cat <<EOF
+usage: $(basename "$0") <start|stop|restart|status|enable|disable> <site> [component]
+
+Components: solr, or a background module name (e.g. koha_export).
+With no component the command applies to the whole site.
+EOF
+    exit 1
+}
+
+[ $# -ge 2 ] || usage
+command=$1
+site=$2
+component=${3:-}
+
+is_site "$site" || die "no such site '$site'"
+
+if [ -z "$component" ]; then
+    unit="aspen@$site.target"
+elif [ "$component" = solr ]; then
+    unit="aspen-solr@$site.service"
+else
+    component=$(echo "$component" | tr '-' '_')
+    [ -f "/usr/lib/systemd/system/aspen-$component@.service" ] || die "no unit for component '$component'"
+    unit="aspen-$component@$site.service"
+fi
+
+case "$command" in
+    start | stop | restart | enable | disable)
+        systemctl "$command" "$unit"
+        ;;
+    status)
+        if [ -z "$component" ]; then
+            systemctl list-units --all "aspen-*@$site.service" "aspen@$site.target" "aspen-sync-modules@$site.timer"
+        else
+            systemctl status "$unit"
+        fi
+        ;;
+    *)
+        usage
+        ;;
+esac

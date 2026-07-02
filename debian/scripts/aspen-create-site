@@ -1,0 +1,44 @@
+#!/bin/sh
+
+# aspen-create-site -- create a new Aspen site and enable its services
+#
+# usage: aspen-create-site <site-config.ini>
+#
+# Wraps install/createSite.php with a site config file (createSite.php
+# documents the recognized keys), then fixes permissions and enables the
+# site's systemd units. On a systemd server the
+# cron keep-alive lines are stripped from the site crontab since systemd
+# supervises Solr and the background daemons.
+
+set -e
+. /usr/share/aspen-discovery/aspen-functions.sh
+
+config=$1
+[ -n "$config" ] || die "usage: $(basename "$0") <site-config.ini>"
+[ -f "$config" ] || die "no such file '$config'"
+
+sitename=$(get_ini_value "$config" Site sitename)
+[ -n "$sitename" ] || die "no sitename in '$config'"
+if is_site "$sitename"; then
+    die "site '$sitename' already exists"
+fi
+
+# createSite.php resolves its argument relative to the install directory
+tmp_config="aspen-create-site.$$.ini"
+cp "$config" "$ASPEN_HOME/install/$tmp_config"
+trap 'rm -f "$ASPEN_HOME/install/$tmp_config"' EXIT
+
+cd "$ASPEN_HOME/install"
+if [ "$(aspen_init_backend)" = systemd ]; then
+    php createSite.php "$tmp_config" --no-start-solr
+
+    # systemd supervises Solr and the background daemons; drop the cron
+    # keep-alive lines from the generated crontab
+    sed -i '/# aspen-supervision/d' "$ASPEN_SITES_DIR/$sitename/conf/crontab_settings.txt"
+
+    aspen-site-perms "$sitename"
+    aspen-enable-site --start "$sitename"
+else
+    php createSite.php "$tmp_config"
+    aspen-site-perms "$sitename"
+fi

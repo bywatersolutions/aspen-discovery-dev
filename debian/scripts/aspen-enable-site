@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# aspen-enable-site -- enable the systemd units for a site
+#
+# usage: aspen-enable-site [--start] <site>
+#
+# Enables the site target plus its component units so the site comes up at
+# boot. The Solr unit is only enabled when the site runs Solr locally.
+
+set -e
+. /usr/share/aspen-discovery/aspen-functions.sh
+
+start=no
+if [ "$1" = --start ]; then
+    start=yes
+    shift
+fi
+site=$1
+[ -n "$site" ] || die "usage: $(basename "$0") [--start] <site>"
+is_site "$site" || die "no such site '$site'"
+[ -d /run/systemd/system ] || die "systemd is not running"
+
+systemctl enable \
+    "aspen-create-dirs@$site.service" \
+    "aspen-sync-modules@$site.service" \
+    "aspen-sync-modules@$site.timer" \
+    "aspen-sync-modules@$site.path" \
+    "aspen@$site.target"
+if is_local_solr "$site"; then
+    systemctl enable "aspen-solr@$site.service"
+fi
+systemctl enable aspen.target
+
+if [ "$start" = yes ]; then
+    systemctl start "aspen@$site.target"
+fi

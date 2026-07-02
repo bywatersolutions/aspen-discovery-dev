@@ -1,0 +1,34 @@
+#!/bin/sh
+
+# aspen-disable-site -- stop and disable the systemd units for a site
+#
+# usage: aspen-disable-site <site>
+#
+# Deliberately does not require the site directory to still exist so a
+# half-removed site can always be cleaned up.
+
+set -e
+. /usr/share/aspen-discovery/aspen-functions.sh
+
+site=$1
+[ -n "$site" ] || die "usage: $(basename "$0") <site>"
+[ -d /run/systemd/system ] || die "systemd is not running"
+
+systemctl stop "aspen@$site.target" 2>/dev/null || true
+
+units="aspen@$site.target
+aspen-solr@$site.service
+aspen-create-dirs@$site.service
+aspen-sync-modules@$site.service
+aspen-sync-modules@$site.timer
+aspen-sync-modules@$site.path"
+for module in $(get_module_templates); do
+    units="$units
+aspen-$module@$site.service"
+done
+
+for unit in $units; do
+    if systemctl is-enabled --quiet "$unit" 2>/dev/null; then
+        systemctl disable --now "$unit" || true
+    fi
+done

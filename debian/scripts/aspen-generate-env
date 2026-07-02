@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# aspen-generate-env -- write the environment file consumed by a systemd unit
+#
+# usage: aspen-generate-env <service> <site>
+#
+# Run as an ExecStartPre so per-site settings from config.ini reach the unit
+# without hand-maintained environment files.
+
+set -e
+. /usr/share/aspen-discovery/aspen-functions.sh
+
+service=$1
+site=$2
+[ -n "$service" ] && [ -n "$site" ] || die "usage: $(basename "$0") <service> <site>"
+is_site "$site" || die "no such site '$site'"
+
+case "$service" in
+    solr)
+        solr_port=$(get_site_conf_value "$site" Index solrPort)
+        [ -n "$solr_port" ] || die "no solrPort configured for '$site'"
+
+        # Optional override of the JVM heap, defaults to the 3g the legacy
+        # <site>.sh launcher hardcodes
+        solr_memory=$(get_site_conf_value "$site" Index solrMemory)
+
+        env_file=$ASPEN_RUN_DIR/$site/solr.env
+        umask 027
+        cat > "$env_file" <<EOF
+SOLR_PORT=$solr_port
+SOLR_MEM=${solr_memory:-3g}
+EOF
+        chown root:solr "$env_file"
+        chmod 640 "$env_file"
+        ;;
+    *)
+        die "unknown service '$service'"
+        ;;
+esac

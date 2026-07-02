@@ -1,0 +1,51 @@
+#!/bin/sh
+
+# aspen-remove-site -- retire an Aspen site on this server
+#
+# usage: aspen-remove-site <site> [--purge-data]
+#
+# Stops and disables the site's services and removes its Apache and cron
+# wiring. The site configuration, data and database are kept unless
+# --purge-data is given, and even then the database is never dropped
+# automatically.
+
+set -e
+. /usr/share/aspen-discovery/aspen-functions.sh
+
+site=
+purge_data=no
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --purge-data) purge_data=yes ;;
+        -*) die "unknown option '$1'" ;;
+        *) site=$1 ;;
+    esac
+    shift
+done
+[ -n "$site" ] || die "usage: $(basename "$0") <site> [--purge-data]"
+is_site "$site" || die "no such site '$site'"
+
+clean_sitename=$(echo "$site" | sed 's/[^A-Za-z0-9_]/_/g')
+
+if [ "$(aspen_init_backend)" = systemd ]; then
+    aspen-disable-site "$site"
+fi
+
+a2dissite "httpd-$site" 2>/dev/null || true
+rm -f "/etc/apache2/sites-available/httpd-$site.conf"
+apache2ctl graceful 2>/dev/null || true
+
+rm -f "/etc/cron.d/$clean_sitename"
+
+if [ "$purge_data" = yes ]; then
+    if get_db_creds "$site"; then
+        echo "The database was NOT dropped. To drop it, run:"
+        echo "  mysql --host=$ASPEN_DB_HOST --port=$ASPEN_DB_PORT -e 'DROP DATABASE \`$ASPEN_DB_NAME\`'"
+    fi
+    rm -rf "${ASPEN_SITES_DIR:?}/$site"
+    rm -rf "${ASPEN_DATA_DIR:?}/$site"
+    rm -rf "${ASPEN_LOG_DIR:?}/$site"
+else
+    echo "Kept $ASPEN_SITES_DIR/$site, $ASPEN_DATA_DIR/$site and $ASPEN_LOG_DIR/$site."
+    echo "Use --purge-data to remove them."
+fi

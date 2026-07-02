@@ -233,6 +233,19 @@ class SystemUtils {
 		];
 	}
 
+	/**
+	 * Returns how this server's Solr and background daemons are supervised:
+	 * 'systemd' when systemd is running and the aspen unit templates are
+	 * installed (the Debian package), 'legacy' when the cron keep-alive
+	 * scripts are responsible for them.
+	 */
+	static function getSupervisionBackend(): string {
+		if (is_dir('/run/systemd/system') && (file_exists('/usr/lib/systemd/system/aspen-solr@.service') || file_exists('/lib/systemd/system/aspen-solr@.service'))) {
+			return 'systemd';
+		}
+		return 'legacy';
+	}
+
 	static function startBackgroundProcess($processName, $additionalArguments = null) : array {
 		if (file_exists(ROOT_DIR . "/cron/$processName.php")) {
 			if (!UserAccount::isLoggedIn()) {

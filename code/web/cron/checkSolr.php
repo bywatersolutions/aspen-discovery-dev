@@ -1,6 +1,12 @@
 <?php
 require_once __DIR__ . '/../bootstrap.php';
 require_once __DIR__ . '/../sys/SolrUtils.php';
+require_once __DIR__ . '/../sys/Utils/SystemUtils.php';
+
+if (SystemUtils::getSupervisionBackend() == 'systemd') {
+	echo("Solr is supervised by systemd (aspen-solr@$serverName.service), nothing to do\r\n");
+	die();
+}
 
 SolrUtils::startSolr();
 

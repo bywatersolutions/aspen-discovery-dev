@@ -24,11 +24,11 @@
 #############
 # Indexing Tasks #
 #############
-@reboot       solr    php /usr/local/aspen-discovery/code/web/cron/checkSolr.php {sitename}
+@reboot       solr    php /usr/local/aspen-discovery/code/web/cron/checkSolr.php {sitename} # aspen-supervision
 5 2 * * *     solr   php /usr/local/aspen-discovery/code/web/cron/updateSuggesters.php {sitename}
 7 3 * * *     aspen   php /usr/local/aspen-discovery/code/web/cron/createSitemaps.php {sitename}
-*/2 * * * *   solr    php /usr/local/aspen-discovery/code/web/cron/checkSolr.php {sitename}
-*/5 * * * *   aspen   php /usr/local/aspen-discovery/code/web/cron/checkBackgroundProcesses.php {sitename}
+*/2 * * * *   solr    php /usr/local/aspen-discovery/code/web/cron/checkSolr.php {sitename} # aspen-supervision
+*/5 * * * *   aspen   php /usr/local/aspen-discovery/code/web/cron/checkBackgroundProcesses.php {sitename} # aspen-supervision
 
 ########################################################
 # Regular extracts that don't need to run continuously #

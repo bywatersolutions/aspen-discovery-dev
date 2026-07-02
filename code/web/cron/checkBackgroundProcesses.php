@@ -4,6 +4,12 @@ require_once __DIR__ . '/../bootstrap.php';
 global $configArray;
 global $serverName;
 
+require_once ROOT_DIR . '/sys/Utils/SystemUtils.php';
+if (SystemUtils::getSupervisionBackend() == 'systemd') {
+	echo("Background processes are supervised by systemd (aspen-*@$serverName units), nothing to do\r\n");
+	die();
+}
+
 //Check to see if there are processes that should be stopped
 require_once ROOT_DIR . '/sys/Greenhouse/ProcessToStop.php';
 $processToStop = new ProcessToStop();

@@ -553,9 +553,11 @@ if ($siteOnMac) {
 }
 
 if (!$siteOnWindows && !$siteOnMac) {
-	//Start solr
+	//Start solr, unless the caller manages solr itself (e.g. aspen-create-site starting it via systemd)
 	exec('chmod +x ' . $siteDir . "/$sitename.sh");
-	execInBackground($siteDir . "/$sitename.sh start");
+	if (!in_array('--no-start-solr', $_SERVER['argv'])) {
+		execInBackground($siteDir . "/$sitename.sh start");
+	}
 	//Link cron to /etc/cron.d folder
 	exec("ln -s /usr/local/aspen-discovery/sites/$sitename/conf/crontab_settings.txt /etc/cron.d/$cleanSitename");
 }

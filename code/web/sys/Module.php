@@ -93,4 +93,32 @@ class Module extends DataObject {
 		self::$_objectStructure[$context] = $structure;
 		return self::$_objectStructure[$context];
 	}
+
+	public function insert(string $context = '') : int|bool {
+		$result = parent::insert($context);
+		if ($result !== false) {
+			$this->flagModuleChange();
+		}
+		return $result;
+	}
+
+	public function update(string $context = '') : int|bool {
+		$result = parent::update($context);
+		if ($result !== false) {
+			$this->flagModuleChange();
+		}
+		return $result;
+	}
+
+	/**
+	 * Let the server's process supervision know the modules changed. On
+	 * systemd servers a path unit watches this flag and re-syncs the
+	 * aspen module units immediately; elsewhere the flag is ignored.
+	 */
+	private function flagModuleChange(): void {
+		global $serverName;
+		if (!empty($serverName)) {
+			@touch('/data/aspen-discovery/' . $serverName . '/module_change.flag');
+		}
+	}
 }

@@ -1,0 +1,9 @@
+[Unit]
+Description=Watch for Aspen Discovery module changes for %i
+PartOf=aspen@%i.target
+
+[Path]
+PathExists=/data/aspen-discovery/%i/module_change.flag
+
+[Install]
+WantedBy=aspen@%i.target

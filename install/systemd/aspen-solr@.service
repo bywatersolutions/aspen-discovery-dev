@@ -1,0 +1,32 @@
+[Unit]
+Description=Aspen Discovery Solr for %i
+PartOf=aspen@%i.target
+Requires=aspen-create-dirs@%i.service
+After=aspen@%i.target aspen-create-dirs@%i.service network.target
+AssertPathExists=/data/aspen-discovery/%i/solr7
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+Type=exec
+User=solr
+Group=solr
+ExecStartPre=+/usr/sbin/aspen-generate-env solr %i
+EnvironmentFile=/run/aspen/%i/solr.env
+Environment=SOLR_LOGS_DIR=/var/log/aspen-discovery/%i/solr
+Environment=SOLR_PID_DIR=/run/aspen/%i
+ExecStart=/usr/local/aspen-discovery/sites/default/solr-8.11.2/bin/solr start -f -m ${SOLR_MEM} -p ${SOLR_PORT} -s /data/aspen-discovery/%i/solr7 -d /usr/local/aspen-discovery/sites/default/solr-8.11.2/server
+SyslogIdentifier=aspen-solr-%i
+LimitNOFILE=65000
+LimitNPROC=65000
+ProtectSystem=full
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+Restart=on-failure
+RestartSec=10s
+TimeoutStopSec=180
+KillMode=mixed
+
+[Install]
+WantedBy=aspen@%i.target

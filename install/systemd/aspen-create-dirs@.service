@@ -1,0 +1,11 @@
+[Unit]
+Description=Create runtime directories for Aspen Discovery site %i
+PartOf=aspen@%i.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/aspen-create-dirs %i
+
+[Install]
+WantedBy=aspen@%i.target

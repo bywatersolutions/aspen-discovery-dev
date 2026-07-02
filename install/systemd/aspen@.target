@@ -1,0 +1,7 @@
+[Unit]
+Description=Aspen Discovery site %i
+PartOf=aspen.target
+After=network.target mariadb.service
+
+[Install]
+WantedBy=aspen.target

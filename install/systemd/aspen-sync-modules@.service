@@ -1,0 +1,13 @@
+[Unit]
+Description=Sync enabled Aspen Discovery modules to systemd units for %i
+PartOf=aspen@%i.target
+Requires=aspen-create-dirs@%i.service
+After=aspen-create-dirs@%i.service mariadb.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/aspen-sync-modules %i
+
+[Install]
+WantedBy=aspen@%i.target

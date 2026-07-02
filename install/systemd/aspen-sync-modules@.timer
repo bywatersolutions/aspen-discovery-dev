@@ -1,0 +1,11 @@
+[Unit]
+Description=Periodic Aspen Discovery module sync for %i
+PartOf=aspen@%i.target
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=5min
+RandomizedDelaySec=30
+
+[Install]
+WantedBy=aspen@%i.target

@@ -1,0 +1,6 @@
+[Unit]
+Description=Aspen Discovery - All sites
+After=network.target mariadb.service
+
+[Install]
+WantedBy=multi-user.target

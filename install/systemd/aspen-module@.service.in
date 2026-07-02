@@ -1,0 +1,40 @@
+# Template for the Aspen Discovery background module units. At package build
+# time '@MODULE@' is replaced with each module's backgroundProcess name to
+# produce the aspen-<module>@.service units.
+[Unit]
+Description=Aspen Discovery @MODULE@ daemon for %i
+PartOf=aspen@%i.target
+Requires=aspen-create-dirs@%i.service
+After=aspen@%i.target aspen-create-dirs@%i.service network-online.target mariadb.service aspen-solr@%i.service
+Wants=network-online.target
+AssertPathExists=/usr/local/aspen-discovery/sites/%i/conf/config.ini
+AssertPathExists=/usr/local/aspen-discovery/code/@MODULE@/@MODULE@.jar
+
+[Service]
+Type=exec
+User=aspen
+Group=aspen
+# CWD is load-bearing: the java config loader resolves ../../sites/<site>/conf
+# relative to the working directory
+WorkingDirectory=/usr/local/aspen-discovery/code/@MODULE@
+EnvironmentFile=-/etc/aspen-discovery/%i/java.env
+ExecStart=/usr/bin/java -jar @MODULE@.jar %i
+SyslogIdentifier=aspen-@MODULE@-%i
+SuccessExitStatus=143
+LimitNOFILE=65000
+LimitNPROC=65000
+ProtectSystem=full
+# The daemons write log4j.<module>.properties into sites/<site>/conf on first run
+ReadWritePaths=/usr/local/aspen-discovery/sites
+ProtectHome=read-only
+PrivateTmp=yes
+NoNewPrivileges=yes
+# The daemons exit 0 on purpose (jar checksum changed on deploy, ILS offline
+# mode) and expect to be relaunched, so restart always rather than on-failure.
+# The 300 second delay matches the checkBackgroundProcesses.php cron cadence.
+Restart=always
+RestartSec=300
+StartLimitIntervalSec=0
+
+[Install]
+WantedBy=aspen@%i.target

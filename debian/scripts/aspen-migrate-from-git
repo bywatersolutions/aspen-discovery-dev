@@ -1,0 +1,96 @@
+#!/bin/sh
+
+# aspen-migrate-from-git -- adopt sites from a git based Aspen install
+#
+# usage: aspen-migrate-from-git <old-tree>
+#
+# Run AFTER moving the old install aside and installing the package:
+#   1. mv /usr/local/aspen-discovery /usr/local/aspen-discovery.pre-deb
+#   2. apt-get install aspen-discovery
+#   3. aspen-migrate-from-git /usr/local/aspen-discovery.pre-deb
+#
+# Copies the per-site directories into the packaged tree, retires the cron
+# keep-alives, removes the legacy conf snippets the package supersedes, and
+# starts every site under systemd. /data/aspen-discovery and
+# /var/log/aspen-discovery are not touched.
+
+set -e
+. /usr/share/aspen-discovery/aspen-functions.sh
+
+old_tree=$1
+[ -n "$old_tree" ] || die "usage: $(basename "$0") <old-tree>"
+[ -d "$old_tree/sites" ] || die "'$old_tree' does not look like an Aspen install (no sites/ directory)"
+[ "$old_tree" != "$ASPEN_HOME" ] || die "the old tree must be moved aside first (e.g. $ASPEN_HOME.pre-deb)"
+[ "$(aspen_init_backend)" = systemd ] || die "the aspen-discovery package with systemd units must be installed first"
+
+# Copy the per-site instance directories into the new tree
+for dir in "$old_tree"/sites/*/; do
+    site=$(basename "$dir")
+    case "$site" in
+        default | template.*) continue ;;
+    esac
+    [ -f "$dir/conf/config.ini" ] || continue
+    if [ -e "$ASPEN_SITES_DIR/$site" ]; then
+        echo "sites/$site already exists in $ASPEN_HOME, skipping copy" >&2
+    else
+        cp -a "$dir" "$ASPEN_SITES_DIR/$site"
+    fi
+done
+
+for site in $(get_sites); do
+    echo "Migrating $site"
+    clean_sitename=$(echo "$site" | sed 's/[^A-Za-z0-9_]/_/g')
+    crontab_file=$ASPEN_SITES_DIR/$site/conf/crontab_settings.txt
+
+    # Retire the cron keep-alives; systemd supervises from here on
+    if [ -f "$crontab_file" ]; then
+        sed -i \
+            -e '/# aspen-supervision/d' \
+            -e '/checkSolr\.php/d' \
+            -e '/checkBackgroundProcesses\.php/d' \
+            "$crontab_file"
+        if [ ! -e "/etc/cron.d/$clean_sitename" ]; then
+            ln -s "$crontab_file" "/etc/cron.d/$clean_sitename"
+        fi
+    fi
+
+    # Carry a non-default Solr heap from the legacy launcher into config.ini
+    launcher=$ASPEN_SITES_DIR/$site/$site.sh
+    if [ -f "$launcher" ]; then
+        old_heap=$(sed -n 's/.*solr start.* -m *\([^ ]*\).*/\1/p' "$launcher" | head -1)
+        if [ -n "$old_heap" ] && [ "$old_heap" != 3g ] &&
+            [ -z "$(get_ini_value "$ASPEN_SITES_DIR/$site/conf/config.ini" Index solrMemory)" ]; then
+            sed -i "/^\[Index\]/a solrMemory = $old_heap" "$ASPEN_SITES_DIR/$site/conf/config.ini"
+            echo "  carried Solr heap $old_heap into [Index] solrMemory"
+        fi
+    fi
+
+    # Re-link the apache vhost if needed (the path is unchanged)
+    if [ -f "$ASPEN_SITES_DIR/$site/httpd-$site.conf" ] && [ ! -e "/etc/apache2/sites-available/httpd-$site.conf" ]; then
+        ln -s "$ASPEN_SITES_DIR/$site/httpd-$site.conf" "/etc/apache2/sites-available/httpd-$site.conf"
+        a2ensite -q "httpd-$site" || true
+    fi
+
+    aspen-site-perms "$site"
+done
+
+# Remove the legacy conf snippets the package's conffiles supersede;
+# duplicate logrotate entries are fatal for logrotate
+rm -f /etc/logrotate.d/aspen_discovery
+rm -f /etc/security/limits.d/solr.conf /etc/security/limits.d/aspen.conf
+
+# Stop anything the legacy supervisors were running, then start under systemd
+systemctl daemon-reload
+for site in $(get_sites); do
+    pkill -u aspen -f "java -jar .*\.jar $site\$" 2>/dev/null || true
+    if [ -x "$ASPEN_SITES_DIR/$site/$site.sh" ] && is_local_solr "$site"; then
+        su -s /bin/sh -c "'$ASPEN_SITES_DIR/$site/$site.sh' stop" solr 2>/dev/null || true
+    fi
+    aspen-enable-site --start "$site"
+    aspen-sync-modules "$site"
+done
+apache2ctl graceful 2>/dev/null || true
+
+echo
+echo "Migration finished. Verify each site (aspen-svc status <site>, the OPAC"
+echo "in a browser), then delete $old_tree."

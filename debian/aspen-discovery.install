@@ -16,6 +16,7 @@ debian/scripts/aspen-disable-site           usr/sbin/
 debian/scripts/aspen-enable-site            usr/sbin/
 debian/scripts/aspen-generate-env           usr/sbin/
 debian/scripts/aspen-list                   usr/sbin/
+debian/scripts/aspen-migrate-from-git       usr/sbin/
 debian/scripts/aspen-remove-site            usr/sbin/
 debian/scripts/aspen-site-perms             usr/sbin/
 debian/scripts/aspen-svc                    usr/sbin/

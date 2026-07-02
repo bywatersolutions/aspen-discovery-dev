@@ -1,0 +1,7 @@
+# Build artifacts from dpkg-buildpackage
+/.debhelper/
+/aspen-discovery/
+/aspen-discovery.substvars
+/debhelper-build-stamp
+/files
+/systemd-units/

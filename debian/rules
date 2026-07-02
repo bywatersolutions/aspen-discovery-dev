@@ -6,6 +6,11 @@
 # Nothing to compile: the jars are prebuilt and committed upstream.
 override_dh_auto_configure override_dh_auto_build override_dh_auto_test:
 
+# dh_clean deletes *.orig files by default; sru-convert.xsl.orig is a real
+# upstream file, not a leftover
+override_dh_clean:
+	dh_clean -Xsru-convert.xsl.orig
+
 # Generate one unit per background module from the master template. The
 # module list is derived from the committed jars so a new module upstream
 # only needs its jar; cron, oai_indexer and reindexer are cron-driven one
@@ -25,6 +30,11 @@ execute_after_dh_install:
 	find debian/aspen-discovery/usr/local/aspen-discovery/code \
 		-mindepth 2 -maxdepth 2 -type d -name src -exec rm -r {} +
 	find debian/aspen-discovery/usr/local/aspen-discovery -name '*.iml' -delete
+	rm -f debian/aspen-discovery/usr/local/aspen-discovery/code/*CodeStyle.xml
+
+# Shipping files under /usr/local is deliberate (see README.Debian);
+# dh_usrlocal would reject them
+override_dh_usrlocal:
 
 # Unit enablement is handled per site in the postinst (and by
 # aspen-create-site), never automatically for template units.
@@ -36,3 +46,9 @@ override_dh_strip override_dh_strip_nondeterminism override_dh_dwz:
 
 override_dh_compress:
 	dh_compress -X.MD
+
+# zstd compresses the 400MB payload far faster than the xz default and
+# installs faster too. Debian 12 and Ubuntu 22.04 dpkg handle zstd; switch
+# back to xz if Debian 11 hosts ever need this package.
+override_dh_builddeb:
+	dh_builddeb -- -Zzstd

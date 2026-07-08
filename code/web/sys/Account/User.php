@@ -5130,6 +5130,7 @@ class User extends DataObject {
 				'Send Aspen PWA Notifications to Home Library Locations',
 			]);
 			$sections['AspenPWA']->addAction(new AdminAction('Settings', 'Aspen Progressive Web Application(PWA) settings', '/AspenPWA/Settings'), 'Administer Aspen Progressive Web Application(PWA) Settings');
+			$sections['AspenPWA']->addAction(new AdminAction('Self Check Settings', 'Aspen Progressive Web Application(PWA) self check settings', '/AspenPWA/SelfCheckSettings'), 'Administer Aspen Progressive Web Application(PWA) Settings');
 		}
 
 		global $plugins;

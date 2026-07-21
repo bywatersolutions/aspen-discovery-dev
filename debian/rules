@@ -30,6 +30,7 @@ execute_after_dh_install:
 	find debian/aspen-discovery/usr/local/aspen-discovery/code \
 		-mindepth 2 -maxdepth 2 -type d -name src -exec rm -r {} +
 	find debian/aspen-discovery/usr/local/aspen-discovery -name '*.iml' -delete
+	find debian/aspen-discovery/usr/local/aspen-discovery -depth -type d -name '.idea' -exec rm -r {} +
 	rm -f debian/aspen-discovery/usr/local/aspen-discovery/code/*CodeStyle.xml
 
 # Shipping files under /usr/local is deliberate (see README.Debian);

@@ -33,7 +33,10 @@ sync_site() {
     for module in $(get_module_templates); do
         unit="aspen-$module@$site.service"
         if echo "$enabled_modules" | grep -qx "$module"; then
-            systemctl enable --now "$unit" ||
+            # --no-block: when this runs from aspen-sync-modules@<site>.service
+            # during target startup, waiting on the module start job would
+            # deadlock; the modules are ordered After= the site target
+            systemctl enable --now --no-block "$unit" ||
                 echo "$(basename "$0"): failed to enable $unit" >&2
         elif systemctl is-enabled --quiet "$unit" 2>/dev/null; then
             systemctl disable --now "$unit" ||

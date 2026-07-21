@@ -85,6 +85,9 @@ for site in $(get_sites); do
     pkill -u aspen -f "java -jar .*\.jar $site\$" 2>/dev/null || true
     if [ -x "$ASPEN_SITES_DIR/$site/$site.sh" ] && is_local_solr "$site"; then
         su -s /bin/sh -c "'$ASPEN_SITES_DIR/$site/$site.sh' stop" solr 2>/dev/null || true
+        # The launcher's stop can fail (script drift, hung JVM); a leftover
+        # legacy Solr would hold the port and crash-loop the unit
+        pkill -u solr -f "solr.solr.home=$ASPEN_DATA_DIR/$site/solr7" 2>/dev/null || true
     fi
     aspen-enable-site --start "$site"
     aspen-sync-modules "$site"

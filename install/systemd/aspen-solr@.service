@@ -12,11 +12,16 @@ Type=exec
 User=solr
 Group=solr
 ExecStartPre=+/usr/sbin/aspen-generate-env solr %i
-EnvironmentFile=/run/aspen/%i/solr.env
+# The '-' matters: environment files are loaded before ExecStartPre runs, so
+# the first start would fail without it; ExecStart re-reads the file after
+# aspen-generate-env writes it
+EnvironmentFile=-/run/aspen/%i/solr.env
 Environment=SOLR_LOGS_DIR=/var/log/aspen-discovery/%i/solr
 Environment=SOLR_PID_DIR=/run/aspen/%i
 ExecStart=/usr/local/aspen-discovery/sites/default/solr-8.11.2/bin/solr start -f -m ${SOLR_MEM} -p ${SOLR_PORT} -s /data/aspen-discovery/%i/solr7 -d /usr/local/aspen-discovery/sites/default/solr-8.11.2/server
 SyslogIdentifier=aspen-solr-%i
+# The solr launcher traps SIGTERM and the JVM exits 143 on a clean stop
+SuccessExitStatus=143
 LimitNOFILE=65000
 LimitNPROC=65000
 ProtectSystem=full

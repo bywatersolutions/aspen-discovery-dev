@@ -1,7 +1,8 @@
 # Aspen hardcodes /usr/local/aspen-discovery throughout the shipped PHP,
 # templates and helper scripts, so v1 of the package installs there. This
 # package targets a private apt repository, not the Debian archive.
-aspen-discovery: dir-or-file-in-usr-local *
+aspen-discovery: dir-in-usr-local *
+aspen-discovery: file-in-usr-local *
 
 # The java daemons ship as prebuilt jars committed upstream
 aspen-discovery: codeless-jar *
@@ -9,3 +10,38 @@ aspen-discovery: codeless-jar *
 # Bundled Solr and vendored java/php/js libraries are part of the upstream
 # distribution model
 aspen-discovery: embedded-library *
+
+# Grouping component units under a per-site aspen@%i.target is the whole
+# design (the Koha bug 40901 model)
+aspen-discovery: systemd-service-file-refers-to-unusual-wantedby-target *
+
+# The package is built with zstd compression; dpkg on Debian 12 and
+# Ubuntu 22.04 support it, lintian on Debian 12 just predates it
+aspen-discovery: malformed-deb-archive *
+
+# Aspen hardcodes /data/aspen-discovery as its data root
+aspen-discovery: non-standard-toplevel-dir *
+aspen-discovery: file-in-unusual-dir *
+
+# Vendored upstream assets (recaptcha js, fonts, bundled Solr and jars)
+aspen-discovery: privacy-breach-google-adsense *
+aspen-discovery: privacy-breach-logo *
+aspen-discovery: privacy-breach-generic *
+aspen-discovery: jar-not-in-usr-share *
+aspen-discovery: embedded-php-library *
+aspen-discovery: classpath-contains-relative-path *
+aspen-discovery: duplicate-font-file *
+aspen-discovery: embedded-javascript-library *
+aspen-discovery: truetype-font-prohibits-installable-embedding *
+aspen-discovery: script-not-executable *
+aspen-discovery: executable-not-elf-or-script *
+aspen-discovery: national-encoding *
+
+# The postinst owns unit enablement (dh_installsystemd runs with
+# --no-enable); the systemctl calls are guarded by /run/systemd/system
+# checks exactly like debhelper's own snippets
+aspen-discovery: maintainer-script-calls-systemctl *
+
+# The postinst deliberately re-chowns the per-site solr7 config sets it
+# refreshes on upgrade
+aspen-discovery: recursive-privilege-change *

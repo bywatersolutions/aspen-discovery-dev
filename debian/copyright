@@ -3,26 +3,284 @@ Upstream-Name: Aspen Discovery
 Source: https://github.com/Aspen-Discovery/aspen-discovery
 
 Comment:
- This is an initial packaging copyright file. Aspen bundles many third
- party components (Solr, java libraries including mysql-connector-java,
- PHP libraries, javascript libraries, fonts, and legacy MaxMind GeoIP
- data); a full license audit is required before distributing this package
- from a public repository.
+ License audit status for redistribution from an apt repository. The
+ stanzas below come from a full inventory of the bundled components.
+ .
+ Three bundled files are NOT freely redistributable and must be resolved
+ before this package is served from a public repository:
+ .
+  * code/carlx_export/lib/ojdbc6.jar: Oracle JDBC 11.2.0.4, proprietary
+    (Oracle OTN license). Remove from the package or restrict the
+    repository; only CARL.X sites need it.
+  * sites/default/GeoIPCity.dat: legacy MaxMind GeoIP City data with no
+    license file. Legacy GeoIP data is under a restrictive MaxMind EULA
+    (old GeoLite was CC-BY-SA 3.0 with attribution). Verify its origin
+    or drop it.
+  * code/java_shared_libraries/src/org/json/: the JSON License ("shall
+    be used for Good, not Evil") is considered non-free by Debian. Only
+    the source is bundled here; it is compiled into the module jars.
+ .
+ Also note: ua-parser.js is AGPL-3.0 (strong copyleft, fine for a
+ private repository); the fonts under code/web/fonts/ ship without
+ their license texts (OFL-1.1 requires the notice to accompany the
+ fonts); glyphicons-halflings is only freely licensed as part of
+ Bootstrap; and several (L)GPL jars are shipped as prebuilt binaries
+ (mysql-connector-java, marc4j, log4j), for which a source offer must
+ be documentable.
 
 Files: *
 Copyright: Turning Leaf Technologies and Aspen Discovery contributors
 License: GPL-2
- On Debian systems, the complete text of the GNU General Public License
- version 2 can be found in /usr/share/common-licenses/GPL-2.
-
-Files: sites/default/solr-*/*
-Copyright: The Apache Software Foundation
-License: Apache-2.0
- On Debian systems, the complete text of the Apache License version 2.0
- can be found in /usr/share/common-licenses/Apache-2.0.
 
 Files: debian/*
 Copyright: 2026 ByWater Solutions
 License: GPL-2
+
+Files: sites/default/solr-*/*
+Copyright: The Apache Software Foundation
+License: Apache-2.0
+
+Files: code/java_shared_libraries/mysql-connector-java-*.jar
+ code/marcMergeUtility/lib/mysql-connector-java-*/*
+Copyright: Oracle and/or its affiliates
+License: GPL-2 with Universal FOSS Exception
+ GPL version 2, with the Universal FOSS Exception version 1.0 permitting
+ linking with other free and open source software.
+
+Files: code/java_shared_libraries/commons-*.jar
+ code/java_shared_libraries/log4j-*.jar
+ code/java_shared_libraries/opencsv-*.jar
+ code/java_shared_libraries/ini4j-*.jar
+ code/marcMergeUtility/lib/ini4j-*/*
+ code/marcMergeUtility/lib/log4j-*.jar
+ code/marcMergeUtility/lib/opencsv-*.jar
+Copyright: The Apache Software Foundation and respective authors
+License: Apache-2.0
+
+Files: code/java_shared_libraries/jsoup-*.jar
+Copyright: Jonathan Hedley
+License: MIT
+
+Files: code/java_shared_libraries/jsch-*.jar
+Copyright: JCraft, Inc.
+License: BSD-3-Clause
+
+Files: code/java_shared_libraries/src/org/json/*
+Copyright: JSON.org
+License: JSON
+ Permission is granted to use, copy, modify, merge, publish, distribute,
+ sublicense, and/or sell copies of the Software subject to the notice
+ being included in all copies, and the restriction: "The Software shall
+ be used for Good, not Evil." This clause makes the license non-free
+ under the DFSG.
+
+Files: code/marcMergeUtility/lib/marc4j/*
+Copyright: Bas Peters and marc4j contributors
+License: LGPL-2.1
+
+Files: code/sierra_export_api/lib/postgresql-*.jar
+Copyright: PostgreSQL Global Development Group
+License: BSD-2-Clause
+
+Files: code/carlx_export/lib/ojdbc6.jar
+Copyright: Oracle and/or its affiliates
+License: Oracle-OTN
+ Proprietary Oracle Technology Network license. NOT redistributable;
+ see the Comment header.
+
+Files: sites/default/GeoIPCity.dat
+Copyright: MaxMind LLC
+License: MaxMind-legacy
+ Legacy MaxMind GeoIP City data, no license text bundled. Redistribution
+ status unresolved; see the Comment header.
+
+Files: code/web/sys/MaxMindGeoIP/*
+Copyright: 2004 MaxMind LLC
+License: LGPL-2.1
+
+Files: code/web/CAS-1.3.4/*
+Copyright: Jasig, phpCAS contributors
+License: Apache-2.0
+
+Files: code/web/sys/Smarty/*
+Copyright: New Digital Group, Inc. and Smarty contributors
+License: LGPL-2.1
+
+Files: code/web/sys/Email/PHPMailer-*/*
+Copyright: PHPMailer contributors
+License: LGPL-2.1
+
+Files: code/web/tinymce/*
+Copyright: Ephox Corporation DBA Tiny Technologies, Inc.
+License: LGPL-2.1
+
+Files: code/web/tinymce/plugins/tinymceEmoji/*
+Copyright: tinymceEmoji contributors
+License: MIT
+
+Files: code/web/services/Authentication/SAML/*
+Copyright: OneLogin, Inc.
+License: MIT
+
+Files: code/web/services/Authentication/SAML/extlib/xmlseclibs/*
+Copyright: Robert Richards
+License: BSD-3-Clause
+
+Files: code/web/recaptcha/*
+Copyright: Google Inc.
+License: MIT
+
+Files: code/web/Minify/*
+Copyright: Ryan Grove, Stephen Clay and Minify contributors
+License: BSD-3-Clause
+
+Files: code/web/interface/themes/responsive/js/lib/ua-parser*.js
+Copyright: Faisal Salman
+License: AGPL-3.0
+
+Files: code/web/interface/themes/responsive/js/lib/*
+ code/web/js/*
+Copyright: Respective upstream authors (jQuery Foundation, Bootstrap
+ authors, Chart.js contributors, and others)
+License: MIT
+Comment: Vendored javascript libraries; all MIT except ua-parser.js
+ (AGPL-3.0, own stanza above) and jquery.tablesorter (MIT/GPL dual,
+ used as MIT).
+
+Files: code/web/fonts/fa-* code/web/fonts/fa6/*
+Copyright: Fonticons, Inc.
+License: OFL-1.1
+Comment: Font Awesome Free; icons CC-BY-4.0, fonts OFL-1.1, code MIT.
+
+Files: code/web/fonts/Roboto* code/web/fonts/OpenSans*
+Copyright: The Roboto and Open Sans project authors
+License: Apache-2.0
+
+Files: code/web/fonts/Ubuntu*
+Copyright: Canonical Ltd.
+License: Ubuntu-Font-1.0
+ Ubuntu Font Licence version 1.0. The licence text must accompany the
+ fonts; it is not currently bundled.
+
+Files: code/web/fonts/glyphicons-halflings-regular.*
+Copyright: Jan Kovarik (Glyphicons)
+License: MIT
+Comment: Glyphicons Halflings are freely licensed only as bundled with
+ Bootstrap 3, which is how they are shipped here.
+
+Files: code/web/fonts/*
+Copyright: The respective font project authors
+License: OFL-1.1
+Comment: NotoSans (all variants), Lato, Montserrat, Raleway, Rubik,
+ JosefinSans, KleeOne, IndieFlower, JetBrainsMono, GothicA1, Catamaran,
+ PT Sans, Merriweather, SourceSansPro. The OFL requires the license
+ text to accompany the fonts; it is not currently bundled.
+
+License: GPL-2
  On Debian systems, the complete text of the GNU General Public License
  version 2 can be found in /usr/share/common-licenses/GPL-2.
+
+License: LGPL-2.1
+ On Debian systems, the complete text of the GNU Lesser General Public
+ License version 2.1 can be found in /usr/share/common-licenses/LGPL-2.1.
+
+License: Apache-2.0
+ On Debian systems, the complete text of the Apache License version 2.0
+ can be found in /usr/share/common-licenses/Apache-2.0.
+
+License: AGPL-3.0
+ On Debian systems, the complete text of the GNU Affero General Public
+ License version 3 can be found in /usr/share/common-licenses/AGPL-3.
+
+License: MIT
+ Permission is hereby granted, free of charge, to any person obtaining a
+ copy of this software and associated documentation files (the
+ "Software"), to deal in the Software without restriction, including
+ without limitation the rights to use, copy, modify, merge, publish,
+ distribute, sublicense, and/or sell copies of the Software, and to
+ permit persons to whom the Software is furnished to do so, subject to
+ the following conditions:
+ .
+ The above copyright notice and this permission notice shall be included
+ in all copies or substantial portions of the Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+License: BSD-2-Clause
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+ .
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+License: BSD-3-Clause
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+ .
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+ 3. Neither the name of the copyright holder nor the names of its
+    contributors may be used to endorse or promote products derived from
+    this software without specific prior written permission.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+License: OFL-1.1
+ SIL Open Font License, Version 1.1. The full text is available at
+ https://scripts.sil.org/OFL and must accompany the font files when they
+ are redistributed.
+
+License: Ubuntu-Font-1.0
+ Ubuntu Font Licence, Version 1.0. The full text is available at
+ https://ubuntu.com/legal/font-licence.
+
+License: GPL-2 with Universal FOSS Exception
+ GPL version 2 (see /usr/share/common-licenses/GPL-2) with Oracle's
+ Universal FOSS Exception version 1.0.
+
+License: JSON
+ The JSON License; see the stanza using it for the problematic clause.
+
+License: Oracle-OTN
+ Oracle Technology Network Development and Distribution License.
+ Proprietary; see the stanza using it.
+
+License: MaxMind-legacy
+ Legacy MaxMind GeoIP data license, text not bundled; see the stanza
+ using it.

@@ -28,7 +28,10 @@ ProtectSystem=full
 ProtectHome=yes
 PrivateTmp=yes
 NoNewPrivileges=yes
-Restart=on-failure
+# Always, not on-failure: the legacy checkSolr.php cron relaunched Solr no
+# matter how it died, and with SuccessExitStatus=143 an external SIGTERM
+# counts as success. An explicit systemctl stop still stays stopped.
+Restart=always
 RestartSec=10s
 TimeoutStopSec=180
 KillMode=mixed

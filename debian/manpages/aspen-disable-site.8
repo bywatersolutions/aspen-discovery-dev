@@ -1,0 +1,13 @@
+.TH ASPEN-DISABLE-SITE 8 "" "aspen-discovery" "Aspen Discovery"
+.SH NAME
+aspen-disable-site \- stop and disable the systemd units for an Aspen site
+.SH SYNOPSIS
+.B aspen-disable-site
+.I site
+.SH DESCRIPTION
+Stops the site target and disables every unit of the site. Deliberately
+does not require the site directory to still exist, so a half-removed
+site can always be cleaned up.
+.SH SEE ALSO
+.BR aspen-enable-site (8),
+.BR aspen-remove-site (8)

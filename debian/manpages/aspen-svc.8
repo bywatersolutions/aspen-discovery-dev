@@ -1,0 +1,34 @@
+.TH ASPEN-SVC 8 "" "aspen-discovery" "Aspen Discovery"
+.SH NAME
+aspen-svc \- manage Aspen Discovery services via systemctl
+.SH SYNOPSIS
+.B aspen-svc
+.I command
+.I site
+.RI [ component ]
+.SH DESCRIPTION
+A thin systemctl wrapper for a site's Aspen units.
+.I command
+is one of
+.BR start ,
+.BR stop ,
+.BR restart ,
+.BR status ,
+.B enable
+or
+.BR disable .
+With no
+.I component
+the command applies to the whole site (aspen@<site>.target).
+The component
+.B solr
+addresses the site's Solr unit; any other component is a background
+module name such as
+.B koha_export
+(dashes are accepted and normalized to underscores).
+.B status
+without a component lists all of the site's units.
+.SH SEE ALSO
+.BR aspen-list (8),
+.BR aspen-sync-modules (8),
+.BR systemctl (1)

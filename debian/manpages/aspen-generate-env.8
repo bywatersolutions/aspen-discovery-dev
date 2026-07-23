@@ -1,0 +1,19 @@
+.TH ASPEN-GENERATE-ENV 8 "" "aspen-discovery" "Aspen Discovery"
+.SH NAME
+aspen-generate-env \- write the environment file a systemd unit consumes
+.SH SYNOPSIS
+.B aspen-generate-env
+.I service
+.I site
+.SH DESCRIPTION
+Reads the site's config.ini and writes
+.IR /run/aspen/<site>/<service>.env ,
+so per-site settings reach the unit without hand-maintained environment
+files. Run as an ExecStartPre by the unit itself. The only
+.I service
+currently is
+.BR solr ,
+whose file carries SOLR_PORT (from solrPort) and SOLR_MEM (from the
+optional solrMemory, default 3g), both from the [Index] section.
+.SH SEE ALSO
+.BR aspen-create-dirs (8)

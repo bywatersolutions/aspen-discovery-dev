@@ -1,0 +1,27 @@
+.TH ASPEN-LIST 8 "" "aspen-discovery" "Aspen Discovery"
+.SH NAME
+aspen-list \- list the Aspen Discovery sites on this server
+.SH SYNOPSIS
+.B aspen-list
+.RB [ \-\-enabled ]
+.RB [ \-\-local\-solr ]
+.SH DESCRIPTION
+Prints one site name per line. A site is a directory under
+.I /usr/local/aspen-discovery/sites/
+with a
+.I conf/config.ini
+file, excluding
+.I default
+and the
+.I template.*
+directories.
+.SH OPTIONS
+.TP
+.B \-\-enabled
+Only sites whose aspen@<site>.target is enabled.
+.TP
+.B \-\-local\-solr
+Only sites whose config.ini points solrHost at this server.
+.SH SEE ALSO
+.BR aspen-svc (8),
+.BR aspen-create-site (8)

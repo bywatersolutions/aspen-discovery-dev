@@ -1,0 +1,17 @@
+.TH ASPEN-ENABLE-SITE 8 "" "aspen-discovery" "Aspen Discovery"
+.SH NAME
+aspen-enable-site \- enable the systemd units for an Aspen site
+.SH SYNOPSIS
+.B aspen-enable-site
+.RB [ \-\-start ]
+.I site
+.SH DESCRIPTION
+Enables the site's target and component units so the site comes up at
+boot. The Solr unit is only enabled when the site runs Solr locally.
+With
+.B \-\-start
+the site target is also started.
+.SH SEE ALSO
+.BR aspen-disable-site (8),
+.BR aspen-create-site (8),
+.BR aspen-svc (8)

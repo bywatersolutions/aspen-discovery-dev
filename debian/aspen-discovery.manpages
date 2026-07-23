@@ -1,0 +1,11 @@
+debian/manpages/aspen-create-dirs.8
+debian/manpages/aspen-create-site.8
+debian/manpages/aspen-disable-site.8
+debian/manpages/aspen-enable-site.8
+debian/manpages/aspen-generate-env.8
+debian/manpages/aspen-list.8
+debian/manpages/aspen-migrate-from-git.8
+debian/manpages/aspen-remove-site.8
+debian/manpages/aspen-site-perms.8
+debian/manpages/aspen-svc.8
+debian/manpages/aspen-sync-modules.8

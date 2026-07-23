@@ -1,0 +1,17 @@
+.TH ASPEN-CREATE-DIRS 8 "" "aspen-discovery" "Aspen Discovery"
+.SH NAME
+aspen-create-dirs \- create the runtime directories for an Aspen site
+.SH SYNOPSIS
+.B aspen-create-dirs
+.I site
+.SH DESCRIPTION
+Creates
+.I /run/aspen/<site>
+and the site's directories under
+.I /var/log/aspen-discovery/
+with the ownership the units expect. Run by
+aspen-create-dirs@<site>.service before the site's other units start;
+there is normally no reason to run it by hand.
+.SH SEE ALSO
+.BR aspen-generate-env (8),
+.BR aspen-enable-site (8)

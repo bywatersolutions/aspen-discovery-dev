@@ -1,0 +1,20 @@
+.TH ASPEN-SYNC-MODULES 8 "" "aspen-discovery" "Aspen Discovery"
+.SH NAME
+aspen-sync-modules \- align a site's module units with its database
+.SH SYNOPSIS
+.B aspen-sync-modules
+.I site
+|
+.B \-\-all
+.SH DESCRIPTION
+Queries the site's database for the enabled modules with a background
+process and enables or disables the matching aspen-<module>@<site>
+units. Warns about enabled modules that have no unit, and changes
+nothing when the database is unreachable.
+.PP
+Run automatically when the site target starts, every five minutes by
+aspen-sync-modules@<site>.timer, and immediately by a path unit when
+the admin UI touches
+.IR /data/aspen-discovery/<site>/module_change.flag .
+.SH SEE ALSO
+.BR aspen-svc (8)

@@ -1,0 +1,20 @@
+.TH ASPEN-SITE-PERMS 8 "" "aspen-discovery" "Aspen Discovery"
+.SH NAME
+aspen-site-perms \- set the ownership and permissions Aspen expects
+.SH SYNOPSIS
+.B aspen-site-perms
+.I site
+|
+.B \-\-all
+|
+.B \-\-global
+.SH DESCRIPTION
+Codifies the chowns from the legacy setup_aspen_user_debian.sh and
+updateSitePermissions_debian.sh scripts. The
+.B \-\-global
+form covers the shipped code tree and the top level data and log
+directories and is run from the package postinst; the per-site form is
+run at site creation and migration.
+.SH SEE ALSO
+.BR aspen-create-site (8),
+.BR aspen-migrate-from-git (8)

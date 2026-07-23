@@ -1,0 +1,15 @@
+.TH ASPEN-REMOVE-SITE 8 "" "aspen-discovery" "Aspen Discovery"
+.SH NAME
+aspen-remove-site \- retire an Aspen Discovery site on this server
+.SH SYNOPSIS
+.B aspen-remove-site
+.I site
+.RB [ \-\-purge\-data ]
+.SH DESCRIPTION
+Stops and disables the site's services and removes its Apache and cron
+wiring. The site configuration, data and database are kept unless
+.B \-\-purge\-data
+is given, and even then the database is never dropped automatically.
+.SH SEE ALSO
+.BR aspen-create-site (8),
+.BR aspen-disable-site (8)

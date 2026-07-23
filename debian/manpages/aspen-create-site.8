@@ -1,0 +1,16 @@
+.TH ASPEN-CREATE-SITE 8 "" "aspen-discovery" "Aspen Discovery"
+.SH NAME
+aspen-create-site \- create a new Aspen Discovery site
+.SH SYNOPSIS
+.B aspen-create-site
+.I site-config.ini
+.SH DESCRIPTION
+Wraps install/createSite.php with a site config file (createSite.php
+documents the recognized keys), then fixes permissions and enables and
+starts the site's systemd units. On a systemd server the cron
+keep-alive lines are stripped from the generated crontab, since the
+units supervise Solr and the background daemons.
+.SH SEE ALSO
+.BR aspen-remove-site (8),
+.BR aspen-enable-site (8),
+.BR aspen-list (8)

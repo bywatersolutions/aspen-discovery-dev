@@ -1,0 +1,27 @@
+.TH ASPEN-MIGRATE-FROM-GIT 8 "" "aspen-discovery" "Aspen Discovery"
+.SH NAME
+aspen-migrate-from-git \- adopt sites from a git based Aspen install
+.SH SYNOPSIS
+.B aspen-migrate-from-git
+.I old-tree
+.SH DESCRIPTION
+Run AFTER moving the old install aside and installing the package:
+.PP
+.nf
+    mv /usr/local/aspen-discovery /usr/local/aspen-discovery.pre-deb
+    apt-get install aspen-discovery
+    aspen-migrate-from-git /usr/local/aspen-discovery.pre-deb
+.fi
+.PP
+Copies the per-site directories into the packaged tree, retires the
+cron keep-alives, removes the legacy conf snippets the package
+supersedes, stops the legacy java and Solr processes, and starts every
+site under systemd.
+.I /data/aspen-discovery
+and
+.I /var/log/aspen-discovery
+are not touched. See README.Debian for the full procedure and
+rollback.
+.SH SEE ALSO
+.BR aspen-site-perms (8),
+.BR aspen-enable-site (8)

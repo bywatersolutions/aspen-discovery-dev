@@ -12,10 +12,11 @@
 # web interfaces at koha:8080 (OPAC) and koha:8081 (staff).
 
 set -euo pipefail
+# Resolve the debs dir before changing directory so relative paths work
+DEBS=$(cd "${1:?usage: koha-integration-test.sh <debs-dir> [ktd-name]}" && pwd)
 cd "$(dirname "$0")"
 . ./lib.sh
 
-DEBS=$(cd "${1:?usage: koha-integration-test.sh <debs-dir> [ktd-name]}" && pwd)
 KTD_NAME=${2:-kohadev}
 C=${ASPEN_TEST_CONTAINER:-aspen-ci-koha}
 NETWORK=${KTD_NETWORK:-${KTD_NAME}_kohanet}

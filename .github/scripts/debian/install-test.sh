@@ -7,10 +7,11 @@
 # <debs-dir> must contain aspen-discovery_*_all.deb and test-site.ini.
 
 set -euo pipefail
+# Resolve the debs dir before changing directory so relative paths work
+DEBS=$(cd "${1:?usage: install-test.sh <debs-dir>}" && pwd)
 cd "$(dirname "$0")"
 . ./lib.sh
 
-DEBS=$(cd "${1:?usage: install-test.sh <debs-dir>}" && pwd)
 C=${ASPEN_TEST_CONTAINER:-aspen-ci-install}
 
 banner "boot and install"

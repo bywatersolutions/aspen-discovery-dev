@@ -12,10 +12,11 @@
 # and the package is purged, leaving exactly what a git based server has.
 
 set -euo pipefail
+# Resolve the debs dir before changing directory so relative paths work
+DEBS=$(cd "${1:?usage: migrate-test.sh <debs-dir>}" && pwd)
 cd "$(dirname "$0")"
 . ./lib.sh
 
-DEBS=$(cd "${1:?usage: migrate-test.sh <debs-dir>}" && pwd)
 C=${ASPEN_TEST_CONTAINER:-aspen-ci-migrate}
 TREE=/usr/local/aspen-discovery
 

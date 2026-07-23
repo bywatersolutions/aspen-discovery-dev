@@ -40,8 +40,8 @@ if (count($updatesToRun) == 0) {
 
 			if (!preg_match('/\d{2}\.\d{2}\.\d{2}/', $versionToUpdateTo)) {
 				$scheduledUpdate->notes = "FAILED: Bad version to update to $versionToUpdateTo \n";
-			}elseif ($scheduledUpdate->updateType === 'complete' && strcasecmp($configArray['System']['operatingSystem'], 'windows') != 0 && !file_exists('/usr/local/aspen-discovery/.git')) {
-				//Complete updates are git based; a server without a git checkout is managed by the aspen-discovery Debian package
+			}elseif ($scheduledUpdate->updateType === 'complete' && strcasecmp($configArray['System']['operatingSystem'], 'windows') != 0 && exec("dpkg-query --show --showformat='\${db:Status-Status}' aspen-discovery 2>/dev/null") === 'installed') {
+				//Complete updates are git based and would overwrite a dpkg managed tree
 				$scheduledUpdate->notes = "FAILED: This server is managed by the aspen-discovery package. Upgrade it with apt instead of a complete scheduled update.\n";
 			}else{
 				if (str_replace('.', '', $versionToUpdateTo) >= str_replace('.', '', $currentVersion)) {

@@ -1,0 +1,124 @@
+name: Debian package
+
+on:
+  push:
+    branches:
+      - debian_packaging
+  pull_request:
+    paths:
+      - 'debian/**'
+      - 'install/systemd/**'
+      - 'docker/deb-builder/**'
+      - 'docker/deb-test/**'
+      - '.github/workflows/debian-package.yml'
+      - '.github/scripts/debian/**'
+  workflow_dispatch:
+
+concurrency:
+  group: debian-package-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and lintian
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Free disk space
+        run: sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc
+      - name: Build builder image
+        run: docker build -t aspen-deb-builder docker/deb-builder
+      - name: Build package
+        run: |
+          mkdir -p out
+          docker run --rm -v "$PWD":/build/aspen-discovery -v "$PWD/out":/out aspen-deb-builder \
+            sh -c 'cd /build/aspen-discovery && dpkg-buildpackage -us -uc -b && cp /build/*.deb /out/'
+          ls -lh out/
+      - name: Lintian
+        run: |
+          docker run --rm -v "$PWD/out":/out aspen-deb-builder \
+            sh -c 'lintian --fail-on error,warning --no-tag-display-limit /out/aspen-discovery_*_all.deb'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aspen-deb
+          path: out/*.deb
+          retention-days: 1
+          compression-level: 0
+
+  install-test:
+    name: Install, site, supervision
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
+            docker
+      - uses: actions/download-artifact@v4
+        with:
+          name: aspen-deb
+          path: debs
+      - name: Build test image
+        run: docker build -t aspen-deb-test docker/deb-test
+      - name: Run install test
+        run: |
+          cp .github/scripts/debian/test-site.ini debs/
+          .github/scripts/debian/install-test.sh debs
+
+  migrate-test:
+    name: Migration from a git install
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
+            docker
+      - uses: actions/download-artifact@v4
+        with:
+          name: aspen-deb
+          path: debs
+      - name: Build test image
+        run: docker build -t aspen-deb-test docker/deb-test
+      - name: Run migration test
+        run: |
+          cp .github/scripts/debian/test-site.ini debs/
+          .github/scripts/debian/migrate-test.sh debs
+
+  koha-integration:
+    name: Extract from a real Koha (ktd)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
+            docker
+      - name: Free disk space
+        run: sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc
+      - uses: actions/download-artifact@v4
+        with:
+          name: aspen-deb
+          path: debs
+      - name: Build test image
+        run: docker build -t aspen-deb-test docker/deb-test
+      - name: Clone Koha and koha-testing-docker
+        run: |
+          git clone --depth 1 https://github.com/Koha-community/Koha.git "$GITHUB_WORKSPACE/koha"
+          git clone --depth 1 https://gitlab.com/koha-community/koha-testing-docker.git "$GITHUB_WORKSPACE/koha-testing-docker"
+      - name: Start ktd
+        run: |
+          export KTD_HOME="$GITHUB_WORKSPACE/koha-testing-docker"
+          export SYNC_REPO="$GITHUB_WORKSPACE/koha"
+          export LOCAL_USER_ID=$(id -u)
+          export PATH="$KTD_HOME/bin:$PATH"
+          cp "$KTD_HOME/env/defaults.env" "$KTD_HOME/.env"
+          ktd up -d
+          ktd --wait-ready 600
+      - name: Run Koha integration test
+        run: |
+          cp .github/scripts/debian/test-site.ini debs/
+          .github/scripts/debian/koha-integration-test.sh debs kohadev

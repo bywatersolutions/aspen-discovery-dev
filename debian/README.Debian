@@ -44,7 +44,10 @@ aspen-sync-modules aligns the units with the database within five minutes
 (immediately once the admin UI hook is in place). The Solr heap can be set
 per site with 'solrMemory' in the [Index] section of config.ini (default
 3g); other limits go in standard systemd drop-ins, e.g.
-/etc/systemd/system/aspen-solr@<sitename>.service.d/override.conf.
+/etc/systemd/system/aspen-solr@<sitename>.service.d/override.conf. The
+module units also read the optional file
+/etc/aspen-discovery/<sitename>/java.env, for passing environment
+variables (e.g. JAVA_TOOL_OPTIONS) to all of a site's java daemons.
 
 The cron keep-alive scripts (checkSolr.php, checkBackgroundProcesses.php)
 are not used on systemd servers: the units supervise the daemons, and the

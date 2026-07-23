@@ -36,6 +36,11 @@ if [ "$(aspen_init_backend)" = systemd ]; then
     # keep-alive lines from the generated crontab
     sed -i '/# aspen-supervision/d' "$ASPEN_SITES_DIR/$sitename/conf/crontab_settings.txt"
 
+    # Bring the schema fully current; aspen.sql can lag the version updates
+    # the code and java daemons expect
+    php /usr/share/aspen-discovery/run-pending-db-updates.php "$sitename" ||
+        echo "$(basename "$0"): database updates reported errors, run Database Maintenance from the admin UI" >&2
+
     aspen-site-perms "$sitename"
     aspen-enable-site --start "$sitename"
 else

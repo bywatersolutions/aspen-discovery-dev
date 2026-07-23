@@ -89,6 +89,10 @@ for site in $(get_sites); do
         # legacy Solr would hold the port and crash-loop the unit
         pkill -u solr -f "solr.solr.home=$ASPEN_DATA_DIR/$site/solr7" 2>/dev/null || true
     fi
+    # The migrated database is at whatever version the old install last
+    # ran; bring it current before starting the daemons
+    php /usr/share/aspen-discovery/run-pending-db-updates.php "$site" ||
+        echo "$(basename "$0"): database updates reported errors for '$site', run Database Maintenance from the admin UI" >&2
     aspen-enable-site --start "$site"
     aspen-sync-modules "$site"
 done

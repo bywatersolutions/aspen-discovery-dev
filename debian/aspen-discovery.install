@@ -22,5 +22,6 @@ debian/scripts/aspen-site-perms             usr/sbin/
 debian/scripts/aspen-svc                    usr/sbin/
 debian/scripts/aspen-sync-modules           usr/sbin/
 debian/scripts/aspen-functions.sh           usr/share/aspen-discovery/
+debian/scripts/run-pending-db-updates.php   usr/share/aspen-discovery/
 debian/conf/aspen-discovery.conf            etc/security/limits.d/
 debian/conf/aspen-discovery.ini             etc/php/8.4/mods-available/

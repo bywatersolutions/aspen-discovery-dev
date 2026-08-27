@@ -32,6 +32,7 @@ import org.json.JSONObject;
 
 class ExtractOverDriveInfo implements AutoCloseable {
 	private static final Logger logger = LogManager.getLogger(ExtractOverDriveInfo.class);
+	private static final int MAX_OVERDRIVE_API_THREADS = 8;
 	private OverDriveRecordGrouper recordGroupingProcessorSingleton;
 	private String serverName;
 	private Connection dbConn;
@@ -75,6 +76,8 @@ class ExtractOverDriveInfo implements AutoCloseable {
 	private PreparedStatement logExternalRequestStmt;
 
 	private final CRC32 checksumCalculator = new CRC32();
+	// Reuse a bounded pool for network requests throughout one setting's extract.
+	private final ExecutorService overDriveApiExecutor = Executors.newFixedThreadPool(MAX_OVERDRIVE_API_THREADS);
 	private boolean errorsWhileLoadingProducts;
 	private boolean hadTimeoutsFromOverDrive;
 	private GroupedWorkIndexer groupedWorkIndexer;
@@ -756,29 +759,29 @@ class ExtractOverDriveInfo implements AutoCloseable {
 						JSONObject advantageInfo = webServiceResponse.getJSONResponse();
 						if (advantageInfo.has("advantageAccounts")) {
 							//Thread loading advantage accounts to improve the speed of loading
-							ExecutorService es = Executors.newCachedThreadPool();
+							List<Future<?>> futures = new ArrayList<>();
 							JSONArray advantageAccounts = advantageInfo.getJSONArray("advantageAccounts");
 							boolean finalLoadCollectionInfo = loadCollectionInfo;
 							for (int i = 0; i < advantageAccounts.length(); i++) {
 								JSONObject curAdvantageAccount = advantageAccounts.getJSONObject(i);
-								es.execute(() -> {
+								futures.add(overDriveApiExecutor.submit(() -> {
 									try {
 										loadProductsForAdvantageAccount(loadType, curAdvantageAccount, startTime, finalLoadCollectionInfo);
 									} catch (SocketTimeoutException e) {
 										logEntry.incErrors("Socket timeout loading information from Libby API ", e);
 										hadTimeoutsFromOverDrive = true;
 									}
-								});
+								}));
 							}
-							es.shutdown();
-							while (true) {
+							for (Future<?> future : futures) {
 								try {
-									boolean terminated = es.awaitTermination(15, TimeUnit.SECONDS);
-									if (terminated) {
-										break;
-									}
+									future.get();
 								} catch (InterruptedException e) {
-									logger.error("Error waiting for all extracts to finish", e);
+									Thread.currentThread().interrupt();
+									throw new SocketTimeoutException("Interrupted while loading Advantage accounts");
+								} catch (ExecutionException e) {
+									errorsWhileLoadingProducts = true;
+									logEntry.incErrors("Error loading Advantage account information from Libby API", e.getCause());
 								}
 							}
 						}
@@ -1017,6 +1020,7 @@ class ExtractOverDriveInfo implements AutoCloseable {
 	private void loadProductsFromUrl(AdvantageCollectionInfo collectionInfo, String mainProductUrl, int loadType, long startTime) throws JSONException, SocketTimeoutException {
 		if  (loadType == LOAD_ALL_PRODUCTS && collectionInfo.getAspenLibraryIds().isEmpty() && collectionInfo.getAdditionalAspenLibraryIds().isEmpty()) {
 			logger.info("Not loading products for " + collectionInfo.getName() + " since it is not part of Aspen");
+			return;
 		}
 		int numProductsLoaded = 0;
 		int numProductsPreviouslyLoaded = 0;
@@ -1496,8 +1500,6 @@ class ExtractOverDriveInfo implements AutoCloseable {
 	private AvailabilityProcessingResult processAvailabilityCollections(OverDriveRecordInfo overDriveInfo, boolean singleWork, HashMap<Long, OverDriveAvailabilityInfo> existingAvailabilities, Set<Long> librariesSatisfiedByPrimaryAvailability, boolean primaryPhase) {
 		AvailabilityProcessingResult result = new AvailabilityProcessingResult();
 
-		BlockingQueue<Runnable> blockingQueue = new ArrayBlockingQueue<>(overDriveInfo.getCollections().size());
-		ThreadPoolExecutor es = new ThreadPoolExecutor(Math.max(1, overDriveInfo.getCollections().size() / 2), overDriveInfo.getCollections().size(), 5000, TimeUnit.MILLISECONDS, blockingQueue);
 		List<Future<AvailabilityProcessingResult>> futures = new ArrayList<>();
 
 		for (AdvantageCollectionInfo collectionInfo : overDriveInfo.getCollections()) {
@@ -1506,19 +1508,7 @@ class ExtractOverDriveInfo implements AutoCloseable {
 			if (targetLibraries.isEmpty()) {
 				continue;
 			}
-			futures.add(es.submit(() -> processAvailabilityForCollection(collectionInfo, overDriveInfo, singleWork, existingAvailabilities, librariesSatisfiedByPrimaryAvailability, primaryPhase)));
-		}
-
-		es.shutdown();
-		while (true) {
-			try {
-				boolean terminated = es.awaitTermination(15, TimeUnit.SECONDS);
-				if (terminated) {
-					break;
-				}
-			} catch (InterruptedException e) {
-				logger.error("Error waiting for availability threads to finish", e);
-			}
+			futures.add(overDriveApiExecutor.submit(() -> processAvailabilityForCollection(collectionInfo, overDriveInfo, singleWork, existingAvailabilities, librariesSatisfiedByPrimaryAvailability, primaryPhase)));
 		}
 
 		for (Future<AvailabilityProcessingResult> future : futures) {
@@ -1526,7 +1516,12 @@ class ExtractOverDriveInfo implements AutoCloseable {
 				AvailabilityProcessingResult collectionResult = future.get();
 				result.changed = result.changed || collectionResult.changed;
 				result.hadErrors = result.hadErrors || collectionResult.hadErrors;
-			} catch (Exception e) {
+			} catch (InterruptedException e) {
+				logger.error("Error waiting for availability threads to finish", e);
+				Thread.currentThread().interrupt();
+				result.hadErrors = true;
+				break;
+			} catch (ExecutionException e) {
 				logEntry.incErrors("Error waiting for availability processing", e);
 				result.hadErrors = true;
 			}
@@ -1829,6 +1824,15 @@ class ExtractOverDriveInfo implements AutoCloseable {
 
 		allProductsInOverDrive.clear();
 		allAdvantageCollections.clear();
+		overDriveApiExecutor.shutdown();
+		try {
+			if (!overDriveApiExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
+				overDriveApiExecutor.shutdownNow();
+			}
+		} catch (InterruptedException e) {
+			overDriveApiExecutor.shutdownNow();
+			Thread.currentThread().interrupt();
+		}
 
 		closeStatement(addProductStmt);
 		closeStatement(getProductIdByOverDriveIdStmt);

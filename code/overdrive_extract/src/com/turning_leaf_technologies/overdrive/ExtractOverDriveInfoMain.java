@@ -21,6 +21,7 @@ import org.apache.logging.log4j.Logger;
 import org.ini4j.Ini;
 
 public class ExtractOverDriveInfoMain {
+	private static final int MAX_PARALLEL_OVERDRIVE_SETTINGS = 4;
 	private static Logger logger;
 	private static String serverName;
 
@@ -97,8 +98,7 @@ public class ExtractOverDriveInfoMain {
 				break;
 			} // End connecting to database
 
-			//noinspection resource in Java 17 The cached thread pool does not have an auto close
-			ExecutorService es = Executors.newCachedThreadPool();
+			ExecutorService es = Executors.newFixedThreadPool(Math.max(1, Math.min(MAX_PARALLEL_OVERDRIVE_SETTINGS, settings.size())));
 			AtomicInteger numChanges = new AtomicInteger(0);
 			AtomicBoolean errorOccurred = new AtomicBoolean();
 			for(OverDriveSetting setting : settings) {

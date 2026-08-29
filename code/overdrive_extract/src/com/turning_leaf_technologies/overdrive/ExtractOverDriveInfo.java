@@ -1134,22 +1134,87 @@ class ExtractOverDriveInfo implements AutoCloseable {
 		}
 	}
 
+	private Map<String, Long> getExistingRecordInformationForProductsBatch(Collection<String> productIds) {
+		Map<String, Long> dbIdsMap = new HashMap<>();
+		if (productIds == null || productIds.isEmpty()) {
+			return dbIdsMap;
+		}
+
+		List<String> idList = new ArrayList<>(productIds);
+		int batchSize = 500;
+
+		for (int i = 0; i < idList.size(); i += batchSize) {
+			List<String> batch = idList.subList(i, Math.min(i + batchSize, idList.size()));
+			
+			StringBuilder sql = new StringBuilder("SELECT id, overdriveid FROM overdrive_api_products WHERE overdriveid IN (");
+			for (int j = 0; j < batch.size(); j++) {
+				if (j > 0) sql.append(",");
+				sql.append("?");
+			}
+			sql.append(")");
+
+			try (PreparedStatement stmt = dbConn.prepareStatement(sql.toString())) {
+				for (int j = 0; j < batch.size(); j++) {
+					stmt.setString(j + 1, batch.get(j));
+				}
+				try (ResultSet rs = stmt.executeQuery()) {
+					while (rs.next()) {
+						dbIdsMap.put(rs.getString("overdriveid"), rs.getLong("id"));
+					}
+				}
+			} catch (SQLException e) {
+				logEntry.incErrors("Error getting existing DB ids for product batch", e);
+			}
+		}
+		return dbIdsMap;
+	}
+
 
 	private void addProductsToUpdate() {
-		for (String productId : settings.getProductsToUpdate()) {
-			OverDriveRecordInfo recordInfo = allProductsInOverDrive.get(productId);
+		Set<String> productsToUpdate = settings.getProductsToUpdate();
+		if (productsToUpdate == null || productsToUpdate.isEmpty()) {
+			return;
+		}
 
-			if (recordInfo == null) {
-				recordInfo = new OverDriveRecordInfo();
-				recordInfo.setId(productId);
-				getExistingRecordInformationForProduct(recordInfo);
-				allProductsInOverDrive.put(recordInfo.getId(), recordInfo);
+		// Identify which product IDs are not yet loaded in memory
+		Set<String> missingProductIds = new HashSet<>();
+		for (String productId : productsToUpdate) {
+			if (!allProductsInOverDrive.containsKey(productId)) {
+				missingProductIds.add(productId);
 			}
+		}
 
-			recordInfo.hasChanges = true;
+		// Query the database once in batch for all missing IDs
+    	Map<String, Long> existingDbIds = getExistingRecordInformationForProductsBatch(missingProductIds);
+
+		for (String productId : productsToUpdate) {
+			Long existingId = existingDbIds.get(productId);
+			OverDriveRecordInfo recordInfo = getRecordByProductId(productId, existingId);
+			
 			logEntry.addNote("Added record " + productId + " to process queue");
 		}
 		logEntry.saveResults();
+	}
+
+	private OverDriveRecordInfo getRecordByProductId(String productId, Long existingId) {
+		OverDriveRecordInfo recordInfo = allProductsInOverDrive.get(productId);
+
+		if (recordInfo == null) {
+            recordInfo = new OverDriveRecordInfo();
+            recordInfo.setId(productId);
+            
+            if (existingId != null) {
+                recordInfo.setDatabaseId(existingId);
+            } else {
+                recordInfo.isNew = true;
+            }
+            
+            allProductsInOverDrive.put(recordInfo.getId(), recordInfo);
+        }
+
+        recordInfo.hasChanges = true;
+
+		return recordInfo;
 	}
 
 	private synchronized void getExistingRecordInformationForProduct(OverDriveRecordInfo curRecord) {

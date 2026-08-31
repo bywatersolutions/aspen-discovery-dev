@@ -3940,8 +3940,8 @@ class SirsiDynixROA extends AbstractIlsDriver {
 			]);
 			$result['api']['itemNotFound'] = true;
 		}else{
-			require_once ROOT_DIR . '/sys/AspenLiDA/SelfCheckSetting.php';
-			$scoSettings = new AspenLiDASelfCheckSetting();
+			require_once ROOT_DIR . '/sys/Mobile/SelfCheckSetting.php';
+			$scoSettings = new MobileSelfCheckSetting();
 			$checkoutLocationSetting = $scoSettings->getCheckoutLocationSetting($currentLocation->code);
 			$itemKey = $lookupItemResponse->key;
 			$bibKey = $lookupItemResponse->fields->bib->key;
@@ -4275,8 +4275,8 @@ class SirsiDynixROA extends AbstractIlsDriver {
 
 		//Find the correct stat group to use
 		$doCheckout = false;
-		require_once ROOT_DIR . '/sys/AspenLiDA/SelfCheckSetting.php';
-		$scoSettings = new AspenLiDASelfCheckSetting();
+		require_once ROOT_DIR . '/sys/Mobile/SelfCheckSetting.php';
+		$scoSettings = new MobileSelfCheckSetting();
 		$checkInLocationSetting = $scoSettings->getCheckoutLocationSetting($currentLocation->code);
 		if ($checkInLocationSetting == 0) {
 			//Use the active location, no change needed

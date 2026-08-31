@@ -1,7 +1,7 @@
 <?php /** @noinspection PhpMissingFieldTypeInspection */
-require_once ROOT_DIR . '/sys/AspenLiDA/SelfCheckBarcode.php';
+require_once ROOT_DIR . '/sys/Mobile/SelfCheckBarcode.php';
 
-class AspenPWASelfCheckSetting extends AspenLiDASelfCheckSetting {
+class AspenPWASelfCheckSetting extends MobileSelfCheckSetting {
 	private $_locations;
 	private $_barcodeStyles;
 
@@ -27,7 +27,7 @@ class AspenPWASelfCheckSetting extends AspenLiDASelfCheckSetting {
 			$locationsList[$location->locationId] = $location->displayName;
 		}
 
-		$allBarcodeStyles = AspenLiDASelfCheckBarcode::getObjectStructure($context);
+		$allBarcodeStyles = MobileSelfCheckBarcode::getObjectStructure($context);
 
 		$checkout_location_options = [
 			'0' => 'Current Location User is Logged Into',

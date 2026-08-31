@@ -6170,8 +6170,8 @@ class UserAPI extends AbstractAPI {
 				$location = new Location();
 				$location->locationId = $activeLocationId;
 				if($location->find(true)) {
-					require_once ROOT_DIR . '/sys/AspenLiDA/SelfCheckSetting.php';
-					$scoSettings = new AspenLiDASelfCheckSetting();
+					require_once ROOT_DIR . '/sys/Mobile/SelfCheckSetting.php';
+					$scoSettings = new MobileSelfCheckSetting();
 					$scoSettings->id = $location->lidaSelfCheckSettingId;
 					if($scoSettings->find(true)) {
 						if($scoSettings->isEnabled) {
@@ -6273,8 +6273,8 @@ class UserAPI extends AbstractAPI {
 				if($location->find(true)) {
 					//We still want the self check settings to give an extra check that the functionality should be enabled
 					// and to allow control over where the title should be returned.
-					require_once ROOT_DIR . '/sys/AspenLiDA/SelfCheckSetting.php';
-					$scoSettings = new AspenLiDASelfCheckSetting();
+					require_once ROOT_DIR . '/sys/Mobile/SelfCheckSetting.php';
+					$scoSettings = new MobileSelfCheckSetting();
 					$scoSettings->id = $location->lidaSelfCheckSettingId;
 					if($scoSettings->find(true)) {
 						if($scoSettings->isEnabled) {

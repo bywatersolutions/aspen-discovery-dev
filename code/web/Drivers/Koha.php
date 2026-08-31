@@ -9028,8 +9028,8 @@ class Koha extends AbstractIlsDriver {
 				'isPublicFacing' => true,
 			]);
 		} else {
-			require_once ROOT_DIR . '/sys/AspenLiDA/SelfCheckSetting.php';
-			$scoSettings = new AspenLiDASelfCheckSetting();
+			require_once ROOT_DIR . '/sys/Mobile/SelfCheckSetting.php';
+			$scoSettings = new MobileSelfCheckSetting();
 			$checkoutLocationSetting = $scoSettings->getCheckoutLocationSetting($currentLocation->code);
 
 			$this->initDatabaseConnection();

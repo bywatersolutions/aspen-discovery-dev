@@ -3415,8 +3415,8 @@ class Sierra extends AbstractIlsDriver {
 
 		//Find the correct stat group to use
 		$doCheckout = false;
-		require_once ROOT_DIR . '/sys/AspenLiDA/SelfCheckSetting.php';
-		$scoSettings = new AspenLiDASelfCheckSetting();
+		require_once ROOT_DIR . '/sys/Mobile/SelfCheckSetting.php';
+		$scoSettings = new MobileSelfCheckSetting();
 		$checkoutLocationSetting = $scoSettings->getCheckoutLocationSetting($currentLocation->code);
 		if ($checkoutLocationSetting == 0) {
 			//Use the active location, no change needed
@@ -3647,8 +3647,8 @@ class Sierra extends AbstractIlsDriver {
 
 		//Find the correct stat group to use
 		$doCheckIn = false;
-		require_once ROOT_DIR . '/sys/AspenLiDA/SelfCheckSetting.php';
-		$scoSettings = new AspenLiDASelfCheckSetting();
+		require_once ROOT_DIR . '/sys/Mobile/SelfCheckSetting.php';
+		$scoSettings = new MobileSelfCheckSetting();
 		$checkInLocationSetting = $scoSettings->getCheckoutLocationSetting($currentLocation->code);
 		if ($checkInLocationSetting == 0) {
 			//Use the active location, no change needed

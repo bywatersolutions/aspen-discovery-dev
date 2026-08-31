@@ -1451,8 +1451,8 @@ class Location extends DataObject {
 				$appLocationSettings[$appLocationSetting->id] = $appLocationSetting->name;
 			}
 
-			require_once ROOT_DIR . '/sys/AspenLiDA/SelfCheckSetting.php';
-			$appSelfCheckSetting = new AspenLiDASelfCheckSetting();
+			require_once ROOT_DIR . '/sys/Mobile/SelfCheckSetting.php';
+			$appSelfCheckSetting = new MobileSelfCheckSetting();
 			$appSelfCheckSetting->orderBy('name');
 			$appSelfCheckSettings = [];
 			$appSelfCheckSetting->find();

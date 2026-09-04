@@ -64,12 +64,27 @@ function finishSession()
 function submitBarcode()
 {
   let barcode = $("#type-barcode-input").val();
-  sessionCheckouts.push(barcode);
-  refreshCheckoutList();
+  
   $("#scan-session").show();
   $(".type-panel").hide();
 
-  console.log(`/AspenPWA/AJAX?method=checkoutItem&barcode=${barcode}`);
+  let url = `/AspenPWA/AJAX?method=checkoutItem&barcode=${barcode}`;
+  console.log(url);
+  $.getJSON(url, function (data) {
+    console.log("response...");
+    console.log(data);
+    if(data.success)
+    {
+      sessionCheckouts.push(barcode);
+      refreshCheckoutList();
+    }
+    else {
+      //TODO show a proper modal or toast here.
+      console.log("error");
+      console.log(data.title);
+      console.log(data.message);
+    }
+  });
 }
 function refreshCheckoutList()
 {

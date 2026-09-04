@@ -33,13 +33,26 @@ class AspenPWA_AJAX extends JSON_Action {
         //itemSource, barcode, barcodeType
         global $locationSingleton;
         $location = $locationSingleton->getActiveLocation();
-        $_REQUEST['locationid'] = $location->locationId;
+		if($location)
+		{
+			$_REQUEST['locationId'] = $location->locationId;
+		}
+		else 
+		{
+			$locations = $api->getValidPickupLocations();
+			if($locations["success"])
+			{
+				$_REQUEST['locationId'] = $locations["pickupLocations"][0]["locationId"];
+			}
+		}
+        
         if(empty($_REQUEST['itemSource']))
         {
             //default to ils checkouts
             $_REQUEST['itemSource'] = "ils";   
         }
+		$result = $api->checkoutItem();
         // TODO separate this path from depending on AspenLidaSelfCheckSettings
-        return $api->checkoutItem();
+        return $result;
     }
 }

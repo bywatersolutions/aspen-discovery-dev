@@ -2587,12 +2587,6 @@ parameters:
 			path: code/web/GroupedWorkSubRecordHomeAction.php
 
 		-
-			message: '#^Offset int on array\<string, string\> on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: code/web/Indexing/Extractor/WorkExtractor.php
-
-		-
 			message: '#^Path in require_once\(\) "Minify/Source\.php" is not a file or it does not exist\.$#'
 			identifier: requireOnce.fileNotFound
 			count: 1

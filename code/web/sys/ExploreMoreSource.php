@@ -160,7 +160,7 @@ class ExploreMoreSource extends DataObject {
 
 	static $_objectStructure = [];
 	static function getObjectStructure($context = ''): array {
-		if (isset(self::$_objectStructure[$context])) {
+		if (isset(self::$_objectStructure[$context]) && self::$_objectStructure[$context] !== null) {
 			return self::$_objectStructure[$context];
 		}
 

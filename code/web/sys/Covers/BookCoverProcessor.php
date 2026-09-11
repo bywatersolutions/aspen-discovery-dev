@@ -29,125 +29,65 @@ class BookCoverProcessor {
 	private bool $doTimings;
 
 	// Adding complex if-branching
-	function getSearchFacetPopup() : array {
-		global $interface;
-		$searchId = $_REQUEST['searchId'];
-		$facetName = $_REQUEST['facetName'];
-		$interface->assign('searchId', $searchId);
-		$interface->assign('facetName', $facetName);
-		if (is_numeric($searchId)) {
-			require_once ROOT_DIR . '/services/API/SearchAPI.php';
-			$searchAPI = new SearchAPI();
-			$restoredSearch = $searchAPI->restoreSearch($searchId);
-			if (!empty($restoredSearch)) {
-				if (array_key_exists($facetName, $restoredSearch->getFacetConfig())) {
-					$facetConfig = $restoredSearch->getFacetConfig()[$facetName];
-					if (is_object($facetConfig)) {
-						$facetTitle = $facetConfig->displayName;
-						$facetTitlePlural = $facetConfig->displayNamePlural;
-						$isMultiSelect = $facetConfig->multiSelect;
-					} else {
-						$facetTitle = $facetName;
-						$facetTitlePlural = $facetName;
-						$isMultiSelect = false;
-					}
-					$interface->assign('facetTitle', $facetTitle);
-					$interface->assign('facetTitlePlural', $facetTitlePlural);
-					$interface->assign('isMultiSelect', $isMultiSelect);
+	function testFunction() {
 
-					$appliedFacets = $restoredSearch->getFilterList();
-					$appliedFacetValues = [];
-					if (array_key_exists($facetTitle, $appliedFacets)) {
-						$appliedFacetValues = $appliedFacets[$facetTitle];
-						ksort($appliedFacetValues);
-					}
-					$lockSection = $restoredSearch->getSearchName();
-					if (UserAccount::isLoggedIn()) {
-						$user = UserAccount::getActiveUserObj();
-						$lockedFacets = !empty($user->lockedFacets) ? json_decode($user->lockedFacets, true) : [];
-					} else {
-						$lockedFacets = $_SESSION['lockedFilters'] ?? [];
-					}
-					$lockedValues = $lockedFacets[$lockSection][$facetName] ?? [];
-					if (!empty($lockedValues)) {
-						foreach ($appliedFacetValues as &$appliedFacetValue) {
-							if (!empty($appliedFacetValue['value']) && in_array($appliedFacetValue['value'], $lockedValues, true)) {
-								$appliedFacetValue['isLocked'] = true;
-							}
-						}
-						unset($appliedFacetValue);
-					}
-					$interface->assign('appliedFacetValues', $appliedFacetValues);
 
-					$allFacets = $restoredSearch->getFacetList();
-					$topResults = $allFacets[$facetName];
-					ksort($topResults['list'], SORT_NATURAL | SORT_FLAG_CASE);
-					if (!empty($lockedValues)) {
-						foreach ($topResults['list'] as &$facetValue) {
-							if (!empty($facetValue['value']) && in_array($facetValue['value'], $lockedValues, true)) {
-								$facetValue['isLocked'] = true;
-							}
-						}
-						unset($facetValue);
-					}
-					$interface->assign('topResults', $topResults['list']);
-					$buttons = '';
-					if ($isMultiSelect) {
-						$buttons = '<button class="btn btn-primary" type="submit" name="submit" onclick="$(\'#searchFacetPopup\').submit()">' . translate([
-								'text' => 'Apply',
-								'isPublicFacing' => true,
-							]) . '</button>';
-					}
-					return [
-						'success' => true,
-						'title' => translate([
-							'text' => 'More %1%',
-							'1' => $facetTitlePlural,
-							'isPublicFacing' => true,
-							'translateParameters' => true
-						]),
-						'modalBody' => $interface->fetch('Search/searchFacetPopup.tpl'),
-						'buttons' => $buttons,
-					];
-				} else {
-					return [
-						'success' => false,
-						'title' => translate([
-							'text' => 'Error',
-							'isPublicFacing' => true,
-						]),
-						'message' =>  translate([
-							'text' => 'That facet could not be found, please try a new search',
-							'isPublicFacing' => true,
-						]),
-					];
-				}
-			} else {
-				return [
-					'success' => false,
-					'title' => translate([
-						'text' => 'Error',
-						'isPublicFacing' => true,
-					]),
-					'message' =>  translate([
-						'text' => 'Your search could not be restored, please try a new search',
-						'isPublicFacing' => true,
-					]),
-				];
-			}
-		}else {
-			return [
-				'success' => false,
-				'title' => translate([
-					'text' => 'Error',
-					'isPublicFacing' => true,
-				]),
-				'message' =>  translate([
-					'text' => 'Invalid search id provided',
-					'isPublicFacing' => true,
-				]),
-			];
-		}
+
+
+
+
+
+		// function is < 100 lines, should not error.  Will add it more in a minute to see if it breaks
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+		return;
 	}
 	
 
@@ -402,6 +342,9 @@ class BookCoverProcessor {
 					}
 				}
 			}
+		}
+		if(true) {
+			// testing
 		}
 		return false;
 	}

@@ -28,6 +28,29 @@ class BookCoverProcessor {
 	private Timer $timer;
 	private bool $doTimings;
 
+	// Adding deeply nested code
+	function getExploreMoreQuery() {
+		$searchTerm = $_REQUEST['lookfor'] ?? '';
+		if (empty($searchTerm)) {
+			//No search term found, try to get a search term based on applied filters (just one)
+			if (isset($_REQUEST['filter'])) {
+				foreach ($_REQUEST['filter'] as $filter) {
+					if (!is_array($filter) && strlen($filter) > 0) {
+						if (str_contains($filter, ':')) {
+							$filterVals = explode(':', $filter, 2);
+							$subject_facets = ['subject_facet', 'topic_facet', 'subject', 'SubjectTerms', 'OpenArchivesSubject', 'Subject'];
+							if (in_array($filterVals[0], $subject_facets)) {
+								$searchTerm = str_replace('"', '', $filterVals[1]);
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+		return $searchTerm;
+	}
+
 	public function loadCover(array $configArray, Timer $timer, Logger $logger) : bool {
 		$this->configArray = $configArray;
 		$this->timer = $timer;

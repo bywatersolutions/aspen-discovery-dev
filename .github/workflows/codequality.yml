@@ -38,14 +38,14 @@ jobs:
         run: phpstan analyse --memory-limit=1G
 
   phpmd:
-    name: Run PHPMD on PR Files Only
+    name: Run PHPMD on PR Lines Only
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Required to compare commits against target branch
+          fetch-depth: 0 # Required to calculate PR diff
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -53,6 +53,9 @@ jobs:
           php-version: '8.4'
           tools: composer, phpmd
           coverage: none
+
+      - name: Setup Reviewdog
+        uses: reviewdog/action-setup@v1
 
       - name: Get Changed PHP Files
         id: changed-files
@@ -62,6 +65,13 @@ jobs:
             **.php
           separator: ','
 
-      - name: Run PHPMD
+      - name: Run PHPMD with Reviewdog
         if: steps.changed-files.outputs.any_changed == 'true'
-        run: phpmd ${{ steps.changed-files.outputs.all_changed_files }} github phpmd.xml
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 1. Run PHPMD on changed files and output in checkstyle XML format
+          phpmd ${{ steps.changed-files.outputs.all_changed_files }} checkstyle phpmd.xml > phpmd-report.xml || true
+
+          # 2. Filter report through Reviewdog against PR line diff
+          reviewdog -f=checkstyle -name="PHPMD" -reporter=github-pr-review -fail-level=error < phpmd-report.xml

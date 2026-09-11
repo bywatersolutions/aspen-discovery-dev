@@ -1,0 +1,77 @@
+name: Static Analysis
+
+on:
+  pull_request:
+
+jobs:
+  phpstan:
+    name: Run PHPStan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer, phpstan
+          coverage: none
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install Dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Run PHPStan
+        run: phpstan analyse --memory-limit=1G
+
+  phpmd:
+    name: Run PHPMD on PR Lines Only
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required to calculate PR diff
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer, phpmd
+          coverage: none
+
+      - name: Setup Reviewdog
+        uses: reviewdog/action-setup@v1
+
+      - name: Get Changed PHP Files
+        id: changed-files
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            **.php
+          separator: ','
+
+      - name: Run PHPMD with Reviewdog
+        if: steps.changed-files.outputs.any_changed == 'true'
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 1. Run PHPMD on changed files and output in checkstyle XML format
+          phpmd ${{ steps.changed-files.outputs.all_changed_files }} checkstyle phpmd.xml > phpmd-report.xml || true
+
+          # 2. Filter report through Reviewdog against PR line diff
+          reviewdog -f=checkstyle -name="PHPMD" -reporter=github-pr-review -fail-level=error < phpmd-report.xml

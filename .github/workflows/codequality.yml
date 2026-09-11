@@ -1,0 +1,66 @@
+name: Static Analysis
+
+on:
+  pull_request:
+
+jobs:
+  phpstan:
+    name: Run PHPStan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer, phpstan
+          coverage: none
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install Dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Run PHPStan
+        run: phpstan analyse --memory-limit=1G
+
+  phpmd:
+    name: Run PHPMD on PR Files Only
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer, phpmd
+          coverage: none
+
+      - name: Run PHPMD on changed files
+        run: |
+          # Get added, copied, modified, or renamed PHP files against base branch
+          FILES=$(git diff --name-only --diff-filter=ACMR origin/${{ github.base_ref }}...HEAD | grep '\.php$' | tr '\n' ',' | sed 's/,$//')
+
+          if [ -n "$FILES" ]; then
+            phpmd "$FILES" github phpmd.xml
+          else
+            echo "No changed PHP files to inspect."
+          fi

@@ -4335,10 +4335,14 @@ class MyAccount_AJAX extends JSON_Action {
 			default => (string)$fieldValue
 		};
 
-		return [
+		$successResponse = [
 			'value' => $fieldValue,
 			'label' => $label
 		];
+
+		// If neither value parses correctly, return null
+		return !($fieldValue || $label) ? null : $successResponse;
+			
 	}
 
 	/**
@@ -4372,6 +4376,9 @@ class MyAccount_AJAX extends JSON_Action {
 			$options = [];
 			foreach ($holds as $hold) {
 				$value = $this->getHoldFilterValue($hold, $facet);
+				if(!$value) {
+					continue;
+				}
 				if (!array_key_exists($value['value'], $options)) {
 					$options[$value['value']] = $value;
 				}

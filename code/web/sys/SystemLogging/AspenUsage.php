@@ -237,6 +237,9 @@ class AspenUsage extends AbstractUsage {
 				if ($this->insert() !== false) {
 					return true;
 				}
+				//A failed insert still assigns lastInsertId, which belongs to a row in some other table, so clear it
+				//before going any further or we could end up incrementing an unrelated row
+				$this->id = null;
 				//Another request created the row for today first, load it and increment atomically
 				$today = new AspenUsage();
 				$today->instance = $this->instance;

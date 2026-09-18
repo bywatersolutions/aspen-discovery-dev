@@ -232,26 +232,13 @@ class AspenUsage extends AbstractUsage {
 		}
 		$this->$fieldName++;
 		try {
-			if (empty($this->id)) {
-				//insert catches PDO exceptions internally and returns false, a duplicate key error does not throw
-				if ($this->insert() !== false) {
-					return true;
-				}
-				//A failed insert still assigns lastInsertId, which belongs to a row in some other table, so clear it
-				//before going any further or we could end up incrementing an unrelated row
-				$this->id = null;
-				//Another request created the row for today first, load it and increment atomically
-				$today = new AspenUsage();
-				$today->instance = $this->instance;
-				$today->year = $this->year;
-				$today->month = $this->month;
-				$today->day = $this->day;
-				if (!$today->find(true)) {
-					return false;
-				}
-				$this->id = $today->id;
-			}
-			return $this->query("UPDATE aspen_usage SET $fieldName = $fieldName + 1 WHERE id = $this->id");
+			//The unique key on ( instance, year, month, day ) lets one statement create today's row or add to it if
+			//another request got there first, so concurrent requests can't lose counts or duplicate the row
+			$instance = $this->escape($this->instance);
+			$year = (int)$this->year;
+			$month = (int)$this->month;
+			$day = (int)$this->day;
+			return $this->query("INSERT INTO aspen_usage (instance, year, month, day, $fieldName) VALUES ($instance, $year, $month, $day, 1) ON DUPLICATE KEY UPDATE $fieldName = $fieldName + 1");
 		} catch (Exception) {
 			//Ignore this, the table has not been created yet
 			return true;

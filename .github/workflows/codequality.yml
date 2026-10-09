@@ -1,0 +1,74 @@
+name: Static Analysis
+
+on:
+  pull_request:
+
+jobs:
+  phpstan:
+    name: Run PHPStan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer, phpstan
+          coverage: none
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install Dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Restore result cache
+        uses: actions/cache/restore@v4
+        with:
+          path: tmp # same as in phpstan.neon
+          key: "phpstan-result-cache-${{ github.run_id }}"
+          restore-keys: |
+            phpstan-result-cache-
+
+      - name: Run PHPStan
+        run: phpstan analyse --memory-limit=1G -vv
+
+      - name: Save result cache
+        uses: actions/cache/save@v4
+        if: ${{ !cancelled() }}
+        with:
+          path: tmp # same as in phpstan.neon
+          key: "phpstan-result-cache-${{ github.run_id }}"
+
+  phpmd:
+    name: Run PHPMD
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required to calculate PR diff
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer, phpmd
+          coverage: none
+
+      - name: Run PHPMD
+        run: |
+          phpmd analyze --format xml --ruleset phpmd.xml --exclude vendor --baseline-file phpmd.baseline.xml .

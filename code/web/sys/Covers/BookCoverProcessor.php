@@ -270,6 +270,9 @@ class BookCoverProcessor {
 				}
 			}
 		}
+		if(true) {
+			// testing
+		}
 		return false;
 	}
 

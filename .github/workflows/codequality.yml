@@ -31,13 +31,12 @@ jobs:
             echo "Author '$AUTHOR' is not in the allowlist."
             echo "If you want to be included, add your username to $ALLOWLIST."
             
-            # Posts a markdown notice to the Actions run summary tab
-            cat <<EOF >> "$GITHUB_STEP_SUMMARY"
-            ### Static Analysis Skipped
-            Static analysis was skipped because **@$AUTHOR** is not on the opt-in list.
-
-            If you want to run PHPStan and PHPMD automatically on your PRs, open a PR adding your GitHub username to \`$ALLOWLIST\`.
-            EOF
+            {
+              echo "### ℹ️ Static Analysis Skipped"
+              echo "Static analysis was skipped because **@$AUTHOR** is not on the opt-in list."
+              echo ""
+              echo "If you want to run PHPStan and PHPMD automatically on your PRs, open a PR adding your GitHub username to \`$ALLOWLIST\`."
+            } >> "$GITHUB_STEP_SUMMARY"
 
             echo "allowed=false" >> "$GITHUB_OUTPUT"
           fi

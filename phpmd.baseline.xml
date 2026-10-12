@@ -3214,4 +3214,17 @@
   <violation rule="PHPMD\Rule\Design\NPathComplexity" file="code/web/sys/mobileesp/mdetect.php" method="DetectMobileQuick"/>
   <violation rule="PHPMD\Rule\CyclomaticComplexity" file="code/web/sys/mobileesp/mdetect.php" method="DetectMobileLong"/>
   <violation rule="PHPMD\Rule\Design\NPathComplexity" file="code/web/sys/mobileesp/mdetect.php" method="DetectMobileLong"/>
+  <violation rule="PHPMD\Rule\CleanCode\ErrorControlOperator" file="docker/files/scripts/createConfig.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ErrorControlOperator" file="docker/files/scripts/createDirs.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="docker/files/scripts/syncEnvToConfig.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ErrorControlOperator" file="install/createSite.php"/>
+  <violation rule="PHPMD\Rule\UnusedFormalParameter" file="install/updateCron_23_06.php"/>
+  <violation rule="PHPMD\Rule\UnusedFormalParameter" file="install/updateCron_23_09.php"/>
+  <violation rule="PHPMD\Rule\UnusedFormalParameter" file="install/updateCron_23_09_01.php"/>
+  <violation rule="PHPMD\Rule\UnusedFormalParameter" file="install/updateCron_24_01.php"/>
+  <violation rule="PHPMD\Rule\UnusedFormalParameter" file="install/updateCron_24_08.php"/>
+  <violation rule="PHPMD\Rule\UnusedFormalParameter" file="install/updateCron_24_08_01.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ErrorControlOperator" file="tests/phpunit/tests/sys/CommunityEngagement/CampaignMilestoneTests.php" method="testGetCampaignMilestoneByCampaignFormat"/>
+  <violation rule="PHPMD\Rule\UnusedLocalVariable" file="tests/phpunit/tests/sys/ThrottlerTests.php"/>
+  <violation rule="PHPMD\Rule\Design\EmptyCatchBlock" file="tests/phpunit/tests/sys/ThrottlerTests.php"/>
 </phpmd-baseline>

@@ -71,4 +71,10 @@ jobs:
 
       - name: Run PHPMD
         run: |
-          phpmd analyze --format xml --ruleset phpmd.xml --exclude vendor --baseline-file phpmd.baseline.xml .
+          phpmd analyze \
+          --format xml \
+          --ruleset phpmd.xml \
+          --exclude vendor \
+          --exclude tmp \
+          --baseline-file phpmd.baseline.xml 
+          .

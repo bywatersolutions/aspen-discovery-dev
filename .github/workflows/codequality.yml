@@ -22,7 +22,7 @@ jobs:
         id: check
         run: |
           AUTHOR="${{ github.event.pull_request.user.login }}"
-          ALLOWLIST=".github/opt-in-users.txt"
+          ALLOWLIST=".github/ci_users.txt"
 
           if [ -f "$ALLOWLIST" ] && grep -Fxiq "$AUTHOR" "$ALLOWLIST"; then
             echo "Author '$AUTHOR' is allowed."
@@ -33,7 +33,7 @@ jobs:
             
             # Posts a markdown notice to the Actions run summary tab
             cat <<EOF >> "$GITHUB_STEP_SUMMARY"
-            ### ℹ️ Static Analysis Skipped
+            ### Static Analysis Skipped
             Static analysis was skipped because **@$AUTHOR** is not on the opt-in list.
 
             If you want to run PHPStan and PHPMD automatically on your PRs, open a PR adding your GitHub username to \`$ALLOWLIST\`.

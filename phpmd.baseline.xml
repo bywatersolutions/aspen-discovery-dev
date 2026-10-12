@@ -662,19 +662,6 @@
   <violation rule="PHPMD\Rule\CyclomaticComplexity" file="code/web/RecordDrivers/TalpaRecordDriver.php" method="getSearchResult"/>
   <violation rule="PHPMD\Rule\Design\NPathComplexity" file="code/web/RecordDrivers/TalpaRecordDriver.php" method="getSearchResult"/>
   <violation rule="PHPMD\Rule\Design\ExcessiveMethodLength" file="code/web/RecordDrivers/TalpaRecordDriver.php" method="getSearchResult"/>
-  <violation rule="PHPMD\Rule\CleanCode\IfStatementAssignment" file="code/web/Test.php" method="failIfStatementAssignment"/>
-  <violation rule="PHPMD\Rule\CleanCode\DuplicatedArrayKey" file="code/web/Test.php"/>
-  <violation rule="PHPMD\Rule\CleanCode\ErrorControlOperator" file="code/web/Test.php" method="failErrorControlOperator"/>
-  <violation rule="PHPMD\Rule\CleanCode\UndefinedVariable" file="code/web/Test.php"/>
-  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="code/web/Test.php" method="failCyclomaticComplexity"/>
-  <violation rule="PHPMD\Rule\Design\NPathComplexity" file="code/web/Test.php" method="failNPathComplexity"/>
-  <violation rule="PHPMD\Rule\Design\ExcessiveMethodLength" file="code/web/Test.php" method="failExcessiveMethodLength"/>
-  <violation rule="PHPMD\Rule\Design\ExcessiveParameterList" file="code/web/Test.php" method="failExcessiveParameterLength"/>
-  <violation rule="PHPMD\Rule\Design\CountInLoopExpression" file="code/web/Test.php"/>
-  <violation rule="PHPMD\Rule\UnusedPrivateField" file="code/web/Test.php"/>
-  <violation rule="PHPMD\Rule\UnusedPrivateMethod" file="code/web/Test.php" method="failUnusedPrivateMethod"/>
-  <violation rule="PHPMD\Rule\UnusedFormalParameter" file="code/web/Test.php"/>
-  <violation rule="PHPMD\Rule\UnusedLocalVariable" file="code/web/Test.php"/>
   <violation rule="PHPMD\Rule\CyclomaticComplexity" file="code/web/bootstrap.php"/>
   <violation rule="PHPMD\Rule\Design\NPathComplexity" file="code/web/bootstrap.php"/>
   <violation rule="PHPMD\Rule\UnusedLocalVariable" file="code/web/bootstrap.php"/>
@@ -1906,7 +1893,6 @@
   <violation rule="PHPMD\Rule\Design\NPathComplexity" file="code/web/sys/Covers/BookCoverProcessor.php" method="loadCover"/>
   <violation rule="PHPMD\Rule\Design\ExcessiveMethodLength" file="code/web/sys/Covers/BookCoverProcessor.php" method="loadCover"/>
   <violation rule="PHPMD\Rule\CyclomaticComplexity" file="code/web/sys/Covers/BookCoverProcessor.php" method="getSideLoadedCover"/>
-  <violation rule="PHPMD\Rule\CleanCode\IfStatementWithoutLogic" file="code/web/sys/Covers/BookCoverProcessor.php"/>
   <violation rule="PHPMD\Rule\CyclomaticComplexity" file="code/web/sys/Covers/BookCoverProcessor.php" method="loadParameters"/>
   <violation rule="PHPMD\Rule\Design\NPathComplexity" file="code/web/sys/Covers/BookCoverProcessor.php" method="loadParameters"/>
   <violation rule="PHPMD\Rule\Design\ExcessiveMethodLength" file="code/web/sys/Covers/BookCoverProcessor.php" method="loadParameters"/>

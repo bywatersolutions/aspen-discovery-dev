@@ -76,5 +76,5 @@ jobs:
           --ruleset phpmd.xml \
           --exclude vendor \
           --exclude tmp \
-          --baseline-file phpmd.baseline.xml 
+          --baseline-file phpmd.baseline.xml \
           .

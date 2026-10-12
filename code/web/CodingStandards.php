@@ -1,6 +1,6 @@
 <?php
 
-class TestClass {
+class CodingStandards {
 
     /**
      * CLEAN CODE RULES
@@ -217,9 +217,7 @@ class TestClass {
     function failEmptyCatchBlock(){
         try {
             throw new Exception("Error");
-        } catch(Exception) {
-            // Do nothing
-        }
+        } catch(Exception) {} // Do not use empty catch blocks
     }
 
     function failCountInLoopExpression(){

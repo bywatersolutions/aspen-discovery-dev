@@ -1,9 +1,21 @@
 includes:
     - phpstan-baseline.neon
+
+rules:
+    - PhpStanRules\DisallowLooseScalarComparisonRule
+services:
+    -
+        class: PhpStanRules\MaxMethodLengthRule
+        arguments:
+            maxLines: 100
+        tags:
+            - phpstan.rules.rule
 parameters:
     level: 5
     reportUnmatchedIgnoredErrors: false
     tmpDir: tmp
+    bootstrapFiles:
+        - phpstan_rules/MaxMethodLengthRule.php
     paths:
         - code/web/
     scanFiles:

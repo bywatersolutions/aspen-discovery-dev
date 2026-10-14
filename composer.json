@@ -17,7 +17,8 @@
     "autoload": {
         "psr-4": {
             "AspenDiscovery\\": "code/web/",
-            "Tests\\": "tests/phpunit"
+            "Tests\\": "tests/phpunit",
+            "PhpStanRules\\": "phpstan_rules/"
         },
         "classmap": [
             "code/web/",

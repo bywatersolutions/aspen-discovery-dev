@@ -4,8 +4,47 @@ on:
   pull_request:
 
 jobs:
+  check-allowlist:
+    name: Check User Allowlist
+    runs-on: ubuntu-latest
+    outputs:
+      allowed: ${{ steps.check.outputs.allowed }}
+    steps:
+      - name: Checkout allowlist from base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          sparse-checkout: |
+            .github/ci_users.txt
+          sparse-checkout-cone-mode: false
+
+      - name: Verify PR author
+        id: check
+        run: |
+          AUTHOR="${{ github.event.pull_request.user.login }}"
+          ALLOWLIST=".github/ci_users.txt"
+
+          if [ -f "$ALLOWLIST" ] && grep -Fxiq "$AUTHOR" "$ALLOWLIST"; then
+            echo "Author '$AUTHOR' is allowed."
+            echo "allowed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Author '$AUTHOR' is not in the allowlist."
+            echo "If you want to be included, add your username to $ALLOWLIST."
+            
+            {
+              echo "### ℹ️ Static Analysis Skipped"
+              echo "Static analysis was skipped because **@$AUTHOR** is not on the opt-in list."
+              echo ""
+              echo "If you want to run PHPStan and PHPMD automatically on your PRs, open a PR adding your GitHub username to \`$ALLOWLIST\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+
+            echo "allowed=false" >> "$GITHUB_OUTPUT"
+          fi
+
   phpstan:
     name: Run PHPStan
+    needs: check-allowlist
+    if: needs.check-allowlist.outputs.allowed == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -37,7 +76,7 @@ jobs:
       - name: Restore result cache
         uses: actions/cache/restore@v4
         with:
-          path: tmp # same as in phpstan.neon
+          path: tmp
           key: "phpstan-result-cache-${{ github.run_id }}"
           restore-keys: |
             phpstan-result-cache-
@@ -49,18 +88,20 @@ jobs:
         uses: actions/cache/save@v4
         if: ${{ !cancelled() }}
         with:
-          path: tmp # same as in phpstan.neon
+          path: tmp
           key: "phpstan-result-cache-${{ github.run_id }}"
 
   phpmd:
     name: Run PHPMD
+    needs: check-allowlist
+    if: needs.check-allowlist.outputs.allowed == 'true'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Required to calculate PR diff
+          fetch-depth: 0
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2

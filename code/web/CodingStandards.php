@@ -340,4 +340,14 @@ class CodingStandards {
         // Assign variable and do nothing with it later on
         $x = 5;        
     }
+
+    public function testStrictComparisons2() {
+        $left = new stdClass();
+        $right = new stdClass();
+        $left->value = "value";
+        $right->value = "value";
+        if($left === $right){
+            echo "Test";
+        }
+    }
 }

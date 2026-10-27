@@ -429,8 +429,8 @@ class MyAccount_MyList extends MyAccount {
 
 		if (count($selectedResourceTypes) == 1 && in_array('GroupedWork', $selectedResourceTypes)) {
 			//Because all records may not be indexed within Solr, and some records may have been weeded, we want to show all entries if no filters are applied
-			//But, we still want to do the solr search to load the facets.
-			$resourceList = $list->getListRecordsUsingSolr($startRecord, $pageSize, $allowEdit, 'html', null, $sortName, $filterParams);
+			//But, we still want to do the solr search to load the facets. The records are rendered again below in that case, so skip rendering them here.
+			$resourceList = $list->getListRecordsUsingSolr($startRecord, $pageSize, $allowEdit, empty($filterParams) ? 'recordDrivers' : 'html', null, $sortName, $filterParams);
 			$numFilteredResults = $resourceList['numFilteredEntries'];
 			$totalResults = $resourceList['numFilteredEntries'];
 			$formattedRecords = $resourceList['formattedRecords'];

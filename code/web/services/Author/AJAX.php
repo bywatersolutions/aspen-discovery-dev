@@ -69,7 +69,8 @@ class Author_AJAX extends JSON_Action {
 				$wiki_lang = substr($activeLanguage->code, 0, 2);
 				$interface->assign('wiki_lang', $wiki_lang);
 				$authorInfo = $memCache->get("wikipedia_article_{$authorName}_$wiki_lang");
-				if (!$authorInfo || isset($_REQUEST['reload'])) {
+				//Crawlers only get articles that are already cached
+				if ((!$authorInfo || isset($_REQUEST['reload'])) && !BotChecker::isRequestFromBot()) {
 					require_once ROOT_DIR . '/services/Author/Wikipedia.php';
 					$wikipediaParser = new Author_Wikipedia();
 					$authorInfo = $wikipediaParser->getWikipedia($authorName, $wiki_lang);

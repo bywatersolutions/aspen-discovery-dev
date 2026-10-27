@@ -207,7 +207,9 @@ class Novelist3 {
 		}
 
 		$data = null;
-		if (($allowReload && $doUpdate) || isset($_REQUEST['reload'])) {
+		//Crawlers get what is already saved, so crawling the catalog does not spend a NoveList call on every title
+		$isCrawler = PHP_SAPI != 'cli' && BotChecker::isRequestFromBot();
+		if ((($allowReload && $doUpdate) || isset($_REQUEST['reload'])) && !$isCrawler) {
 			$novelistData->groupedRecordHasISBN = count($isbns) > 0;
 
 			if ($doUpdate && $novelistData->primaryISBN != null && strlen($novelistData->primaryISBN) > 0) {

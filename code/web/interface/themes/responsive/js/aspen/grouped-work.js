@@ -205,6 +205,26 @@ AspenDiscovery.GroupedWork = (function(){
 			});
 		},
 
+		//Panels further down a record page load as they come into view, so crawlers that never scroll do not request
+		//them (More Like This alone loads about 25 covers). Without IntersectionObserver they load right away.
+		loadWhenVisible: function (selector, loadFunction) {
+			var element = document.querySelector(selector);
+			if (!element || !('IntersectionObserver' in window)) {
+				loadFunction();
+				return;
+			}
+			var observer = new IntersectionObserver(function (entries) {
+				for (var i = 0; i < entries.length; i++) {
+					if (entries[i].isIntersecting) {
+						observer.disconnect();
+						loadFunction();
+						return;
+					}
+				}
+			});
+			observer.observe(element);
+		},
+
 		loadMoreLikeThis: function (id, format, forceReload) {
 			var url = Globals.path + "/GroupedWork/" + encodeURIComponent(id) + "/AJAX";
 

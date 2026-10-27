@@ -31,6 +31,10 @@ class ExternalReviews {
 		if (empty($this->isbn)) {
 			return;
 		}
+		//Reviews are fetched from the providers on every view, so do not spend those calls on crawlers
+		if (PHP_SAPI != 'cli' && BotChecker::isRequestFromBot()) {
+			return;
+		}
 
 		// Fetch from provider
 		require_once ROOT_DIR . '/sys/Enrichment/SyndeticsSetting.php';

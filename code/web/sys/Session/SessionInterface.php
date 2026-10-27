@@ -16,7 +16,10 @@ class SessionInterface implements SessionHandlerInterface {
 		session_set_save_handler($this);
 		//Have to set the default timeout before we call session start, set a really long timeout by default since PHP doesn't like to extend the PHPSESSION timeout
 		//Set one year by default
-		session_set_cookie_params(0, '/');
+		//Crawlers are not given a cookie at all, see initializeSession() in index.php
+		if (ini_get('session.use_cookies')) {
+			session_set_cookie_params(0, '/');
+		}
 		session_start();
 	}
 

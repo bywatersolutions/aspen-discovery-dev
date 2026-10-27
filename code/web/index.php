@@ -1379,6 +1379,12 @@ function initializeSession() {
 	global $session;
 	require_once ROOT_DIR . '/sys/Session/MySQLSession.php';
 	session_name('aspen_session');
+	//Crawlers rarely send cookies back and their sessions are not saved (see MySQLSession::write()), so don't hand them a cookie.
+	//Keeping Set-Cookie off these responses also lets a CDN cache them.
+	global $module;
+	if ($module != 'API' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') == 'GET' && empty($_COOKIE['aspen_session']) && BotChecker::isRequestFromBot()) {
+		ini_set('session.use_cookies', '0');
+	}
 	$session = new MySQLSession();
 	$session->init();
 

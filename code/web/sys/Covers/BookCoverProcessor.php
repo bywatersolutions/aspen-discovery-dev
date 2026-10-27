@@ -1,5 +1,6 @@
 <?php
 require_once ROOT_DIR . '/sys/Covers/BookCoverInfo.php';
+require_once ROOT_DIR . '/sys/Covers/CachedCoverFile.php';
 
 class BookCoverProcessor {
 	private const EVENT_DATE_COVER_DRIVERS = [
@@ -15,6 +16,7 @@ class BookCoverProcessor {
 	 * @var ?BookCoverInfo
 	 */
 	private ?BookCoverInfo $bookCoverInfo;
+	private array $coverGenerations = [];
 	private string $bookCoverPath;
 	private string $size;
 	private string $id;
@@ -509,20 +511,24 @@ class BookCoverProcessor {
 			}
 			$this->bookCoverInfo->setRecordId($this->id);
 			$this->bookCoverInfo->setRecordType($this->type);
+			$this->captureCoverGenerations();
 			$this->bookCoverInfo->find(true);
 		} elseif (!is_null($this->isn)) {
 			$this->cacheName = $this->isn;
 			$this->bookCoverInfo->setRecordId($this->isn);
 			$this->bookCoverInfo->setRecordType('unknown_isbn');
+			$this->captureCoverGenerations();
 			$this->bookCoverInfo->find(true);
 		} elseif (!is_null($this->upc)) {
 			$this->cacheName = $this->upc;
 			$this->bookCoverInfo->setRecordId($this->upc);
 			$this->bookCoverInfo->setRecordType('unknown_upc');
+			$this->captureCoverGenerations();
 		} elseif (!is_null($this->issn)) {
 			$this->cacheName = $this->issn;
 			$this->bookCoverInfo->setRecordId($this->issn);
 			$this->bookCoverInfo->setRecordType('unknown_issn');
+			$this->captureCoverGenerations();
 		} else {
 			$this->error = "ISN, UPC, or id must be provided.";
 			return false;
@@ -539,18 +545,25 @@ class BookCoverProcessor {
 	}
 
 	private function addCachingHeader() : void {
-		//Add caching information
-		$expires = 60 * 60 * 24 * 14;  //expire the cover in 2 weeks on the client side
-		header("Cache-Control: maxage=" . $expires);
-		header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $expires) . ' GMT');
+		//Add caching information, covers expire in 2 weeks on the client side
+		CachedCoverFile::sendCachingHeaders();
 		$this->log("Added caching header", Logger::LOG_NOTICE);
 	}
 
-	private function addModificationHeaders($filename) : bool {
+	//Read before bookcover_info is loaded, so a change saved while this request runs retires the marker it leaves
+	private function captureCoverGenerations() : void {
+		$this->coverGenerations = CachedCoverFile::getGenerations($this->bookCoverInfo->getRecordType(), $this->bookCoverInfo->getRecordId());
+	}
+
+	private function getModificationHeaderValues(string $filename) : array {
 		$timestamp = filemtime($filename);
-		$this->logTime("Got file timestamp $timestamp");
 		$last_modified = substr(date('r', $timestamp), 0, -5) . 'GMT';
 		$etag = '"' . md5($last_modified) . '"';
+		return [$last_modified, $etag];
+	}
+
+	private function addModificationHeaders($filename) : bool {
+		[$last_modified, $etag] = $this->getModificationHeaderValues($filename);
 		$this->logTime("Got last_modified $last_modified and etag $etag");
 		// Send the headers
 		header("Last-Modified: $last_modified");
@@ -756,8 +769,7 @@ class BookCoverProcessor {
 		}
 
 		if ($hasCachedImage) {
-			$this->bookCoverInfo->setLastUsed(time());
-			$this->bookCoverInfo->update();
+			$this->bookCoverInfo->updateLastUsed();
 
 
 			if ($this->bookCoverInfo->getImageSource() == 'default') {
@@ -773,6 +785,11 @@ class BookCoverProcessor {
 				$this->logTime("Found cached cover");
 				$this->log("$fileName exists, returning", Logger::LOG_NOTICE);
 				$this->returnImage($fileName);
+				//Event covers are named for the event's dates, so the file a request should get can change without a save
+				if (!array_key_exists($this->type, self::EVENT_DATE_COVER_DRIVERS)) {
+					[$lastModified, $etag] = $this->getModificationHeaderValues($fileName);
+					CachedCoverFile::rememberSentFile($fileName, $lastModified, $etag, $this->coverGenerations);
+				}
 			} else {
 				$hasCachedImage = false;
 			}

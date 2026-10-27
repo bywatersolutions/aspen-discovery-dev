@@ -1,4 +1,9 @@
 <?php
+//Covers already cached on disk are sent before bootstrap, see CachedCoverFile for when that is allowed
+require_once __DIR__ . '/sys/Covers/CachedCoverFile.php';
+if (CachedCoverFile::sendIfCached()) {
+	exit;
+}
 require_once 'bootstrap.php';
 require_once 'bootstrap_aspen.php';
 

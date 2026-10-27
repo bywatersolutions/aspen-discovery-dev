@@ -261,6 +261,10 @@ if (array_key_exists('Community Engagement', $enabledModules)) {
 	require_once ROOT_DIR . '/sys/CommunityEngagement/action-hooks.php';
 }
 
+//Covers sent before bootstrap could not count themselves, add them now that the database is open
+require_once ROOT_DIR . '/sys/Covers/CachedCoverFile.php';
+CachedCoverFile::recordPendingCoverViews($aspenUsage);
+
 $timer->logTime("Basic Initialization");
 loadLibraryAndLocation();
 

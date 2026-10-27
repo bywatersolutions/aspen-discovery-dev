@@ -652,4 +652,17 @@ class SystemVariables extends DataObject {
 		}
 		return parent::update($context);
 	}
+
+	protected function clearCachedData() : void {
+		//useOriginalCoverUrls decides whether cached cover files are sent at all, so only a change to it matters. While an
+		//offline window is scheduled UInterface saves the loaded settings on every request, which changes nothing here.
+		$loadedSystemVariables = SystemVariables::$_systemVariables;
+		if ($loadedSystemVariables === $this) {
+			return;
+		}
+		if (!($loadedSystemVariables instanceof SystemVariables) || $loadedSystemVariables->useOriginalCoverUrls != $this->useOriginalCoverUrls) {
+			require_once ROOT_DIR . '/sys/Covers/CachedCoverFile.php';
+			CachedCoverFile::retireSite();
+		}
+	}
 }

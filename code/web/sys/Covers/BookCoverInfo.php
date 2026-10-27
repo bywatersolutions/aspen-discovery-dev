@@ -47,11 +47,32 @@ class BookCoverInfo extends DataObject {
 		if (!self::$_allCoversReloadedThisSession) {
 			$this->query("UPDATE " . $this->__table . " SET thumbnailLoaded = 0, mediumLoaded = 0, largeLoaded = 0 where imageSource = 'default'");
 			self::$_allCoversReloadedThisSession = true;
+			require_once ROOT_DIR . '/sys/Covers/CachedCoverFile.php';
+			CachedCoverFile::retireSite();
 		}
 	}
 
 	public function reloadOMDBCovers() : void {
 		$this->query("UPDATE " . $this->__table . " SET thumbnailLoaded = 0, mediumLoaded = 0, largeLoaded = 0 where imageSource = 'omdb_title' OR imageSource = 'omdb_title_year'");
+		require_once ROOT_DIR . '/sys/Covers/CachedCoverFile.php';
+		CachedCoverFile::retireSite();
+	}
+
+	/**
+	 * Refresh lastUsed at most once a day. It bypasses update() on purpose so it does not retire the marker that lets
+	 * this cover be sent before bootstrap, since nothing about the image changed.
+	 */
+	public function updateLastUsed() : void {
+		$now = time();
+		if (!empty($this->id) && $now - (int)$this->lastUsed >= 24 * 60 * 60) {
+			$this->lastUsed = $now;
+			$this->query("UPDATE " . $this->__table . " SET lastUsed = $now WHERE id = " . (int)$this->id);
+		}
+	}
+
+	protected function clearCachedData() : void {
+		require_once ROOT_DIR . '/sys/Covers/CachedCoverFile.php';
+		CachedCoverFile::retireRecord($this->recordType, $this->recordId);
 	}
 
 	public function getImageSource() : ?string {

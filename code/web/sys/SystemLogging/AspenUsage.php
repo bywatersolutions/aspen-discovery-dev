@@ -182,6 +182,10 @@ class AspenUsage extends AbstractUsage {
 		return $this->incrementField('coverViews');
 	}
 
+	public function addCoverViews(int $numCoverViews) : bool {
+		return $this->incrementField('coverViews', $numCoverViews);
+	}
+
 	public function incGenealogySearches() : bool {
 		return $this->incrementField('genealogySearches');
 	}
@@ -226,11 +230,11 @@ class AspenUsage extends AbstractUsage {
 		return $this->incrementField('blockedApiRequests');
 	}
 
-	private function incrementField(string $fieldName) : bool {
+	private function incrementField(string $fieldName, int $amount = 1) : bool {
 		if (!property_exists($this, $fieldName)) {
 			return false;
 		}
-		$this->$fieldName++;
+		$this->$fieldName += $amount;
 		try {
 			//The unique key on ( instance, year, month, day ) lets one statement create today's row or add to it if
 			//another request got there first, so concurrent requests can't lose counts or duplicate the row
@@ -238,7 +242,7 @@ class AspenUsage extends AbstractUsage {
 			$year = (int)$this->year;
 			$month = (int)$this->month;
 			$day = (int)$this->day;
-			return $this->query("INSERT INTO aspen_usage (instance, year, month, day, $fieldName) VALUES ($instance, $year, $month, $day, 1) ON DUPLICATE KEY UPDATE $fieldName = $fieldName + 1");
+			return $this->query("INSERT INTO aspen_usage (instance, year, month, day, $fieldName) VALUES ($instance, $year, $month, $day, $amount) ON DUPLICATE KEY UPDATE $fieldName = $fieldName + $amount");
 		} catch (Exception) {
 			//Ignore this, the table has not been created yet
 			return true;

@@ -95,9 +95,13 @@ class Translator {
 		$allowTermCreation = ($this->translationModeActive() && (UserAccount::userHasPermission('Translate Aspen'))) || $fromLiDA;
 		//We will allow adding terms to the database even if we aren't in translation mode if the user is a translator, and we have the ability to do google translations.
 		$googleSettings = $this->getGoogleTranslationSettings();
-		if (!is_null($googleSettings) && !empty($activeLanguage)) {
+		$termCreationIsOnlyForGoogle = false;
+		//Crawlers are left out so they cannot write terms or run up Google charges on every request
+		$isCrawler = PHP_SAPI != 'cli' && BotChecker::isRequestFromBot();
+		if (!is_null($googleSettings) && !empty($activeLanguage) && !$allowTermCreation && !$isCrawler) {
 			//Allow automatic translation the first time if we have Google Translate active.
 			$allowTermCreation = true;
+			$termCreationIsOnlyForGoogle = true;
 		}
 
 		try {
@@ -109,6 +113,14 @@ class Translator {
 					$translationTerm = new TranslationTerm();
 					$translationTerm->setTerm($phrase);
 					$defaultTextChanged = false;
+					$databaseTranslation = null;
+					if (!$allowTermCreation || $termCreationIsOnlyForGoogle) {
+						$databaseTranslation = $this->getDatabaseTranslation($phrase, $activeLanguage);
+						if ($termCreationIsOnlyForGoogle && $databaseTranslation['termExists'] && !empty($databaseTranslation['translation'])) {
+							//Already translated, so there is nothing for Google to fill in
+							$allowTermCreation = false;
+						}
+					}
 					// Write term records to DB in translation mode or when called from a verified LiDA instance.
 					if ($allowTermCreation) {
 						if (!$translationTerm->find(true)) {
@@ -191,13 +203,13 @@ class Translator {
 							}
 						}
 					} else {
-						// Non-translation mode: try to load the term if it exists.
-						if (!$translationTerm->find(true)) {
+						// Non-translation mode: use the term if it exists.
+						if (!$databaseTranslation['termExists']) {
 							// Term doesn't exist - check DB override first, then .ini defaults.
 							if (empty($this->words)) {
 								$this->loadTranslationsFromIniFile();
 							}
-							$dbTranslation = $this->loadDbOverride($phrase);
+							$dbTranslation = $databaseTranslation['translation'];
 							if ($dbTranslation !== null) {
 								$returnString = $dbTranslation;
 							} elseif (isset($this->words[$phrase])) {
@@ -232,7 +244,14 @@ class Translator {
 						$translation = new Translation();
 						$translation->termId = $translationTerm->getId();
 						$translation->languageId = $activeLanguage->id;
-						if (!$translation->find(true) || empty($translation->translation)) {
+						if ($allowTermCreation) {
+							$translationFound = $translation->find(true) && !empty($translation->translation);
+						} else {
+							//Already looked up along with the term
+							$translation->translation = $databaseTranslation['translation'];
+							$translationFound = !empty($translation->translation);
+						}
+						if (!$translationFound) {
 							if (!empty($defaultText)) {
 								$defaultTranslation = $defaultText;
 								$translation->translated = ($activeLanguage->id == 1) ? 1 : 0;
@@ -489,6 +508,67 @@ class Translator {
 			$translation = ucfirst($translation);
 		}
 		return trim($translation);
+	}
+
+	/**
+	 * Look up whether a phrase has a term and what its translation is for a language. The answer is shared
+	 * across requests, so most phrases cost no queries. For a phrase with no term, the translation is the
+	 * database override, if any.
+	 */
+	private function getDatabaseTranslation(string $phrase, Language $activeLanguage) : array {
+		global $memCache;
+		//The fallback language used before the languages table exists has no id
+		$cacheKey = self::getDatabaseTranslationCacheKey($phrase, (int)$activeLanguage->id);
+		if (isset($_REQUEST['reload'])) {
+			$memCache->deleteFromSharedMemory($cacheKey);
+		}
+		return $memCache->getFromSharedMemory($cacheKey, Memcache::MAX_SHARED_MEMORY_SECONDS, function () use ($phrase, $activeLanguage) {
+			$translationTerm = new TranslationTerm();
+			$translationTerm->setTerm($phrase);
+			if ($translationTerm->find(true)) {
+				$translation = new Translation();
+				$translation->termId = $translationTerm->getId();
+				$translation->languageId = $activeLanguage->id;
+				return [
+					'termExists' => true,
+					'translation' => $translation->find(true) ? $translation->translation : null,
+				];
+			}
+			return [
+				'termExists' => false,
+				'translation' => $this->loadDbOverride($phrase),
+			];
+		});
+	}
+
+	private static function getDatabaseTranslationCacheKey(string $phrase, int $languageId) : string {
+		return 'translation_lookup_' . $languageId . '_' . md5($phrase);
+	}
+
+	private static ?array $languageIdsForClearing = null;
+
+	/**
+	 * Forget the shared lookup for a phrase when its term or translation is saved, for one language or all of them.
+	 */
+	public static function clearDatabaseTranslation(?string $phrase, ?int $languageId = null) : void {
+		global $memCache;
+		//Only worth doing when there is shared memory to clear, this avoids the language query otherwise
+		if (empty($phrase) || !($memCache instanceof Memcache) || !$memCache->isSharedMemoryEnabled()) {
+			return;
+		}
+		if ($languageId === null) {
+			if (self::$languageIdsForClearing === null) {
+				require_once ROOT_DIR . '/sys/Translation/Language.php';
+				$language = new Language();
+				self::$languageIdsForClearing = $language->fetchAll('id');
+			}
+			$languageIds = self::$languageIdsForClearing;
+		} else {
+			$languageIds = [$languageId];
+		}
+		foreach ($languageIds as $languageIdToClear) {
+			$memCache->deleteFromSharedMemory(self::getDatabaseTranslationCacheKey($phrase, (int)$languageIdToClear));
+		}
 	}
 
 	private function loadDbOverride(string $phrase): ?string {

@@ -183,4 +183,9 @@ class TranslationTerm extends DataObject {
 	public function setLastUpdate($lastUpdate): void {
 		$this->lastUpdate = $lastUpdate;
 	}
+
+	protected function clearCachedData() : void {
+		require_once ROOT_DIR . '/sys/Translation/Translator.php';
+		Translator::clearDatabaseTranslation($this->term);
+	}
 }

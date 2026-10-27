@@ -478,6 +478,7 @@ abstract class DataObject implements JsonSerializable {
 
 		do_action('after_object_insert', $this);
 
+		$this->clearCachedData();
 		return $response;
 	}
 
@@ -588,7 +589,8 @@ abstract class DataObject implements JsonSerializable {
 		
 		// Clear changed fields after update (successful or failed).
 		$this->_changedFields = [];
-		
+
+		$this->clearCachedData();
 		return $response;
 	}
 
@@ -662,7 +664,15 @@ abstract class DataObject implements JsonSerializable {
 				$history->insert();
 			}
 		}
+		$this->clearCachedData();
 		return $result;
+	}
+
+	/**
+	 * Called after this object is inserted, updated or deleted. Classes whose data is cached, in shared memory
+	 * or for the current request, override it to clear their entries so the change shows up right away.
+	 */
+	protected function clearCachedData() : void {
 	}
 
 	public function deleteAll() : bool|int {

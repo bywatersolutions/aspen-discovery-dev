@@ -57,4 +57,18 @@ class Translation extends DataObject {
 			//$response = json_decode($response);
 		}
 	}
+
+	protected function clearCachedData() : void {
+		global $memCache;
+		//The term lookup is only worth doing when there is shared memory to clear
+		if (!empty($this->termId) && $memCache instanceof Memcache && $memCache->isSharedMemoryEnabled()) {
+			$term = new TranslationTerm();
+			$term->setId($this->termId);
+			if ($term->find(true)) {
+				require_once ROOT_DIR . '/sys/Translation/Translator.php';
+				//Deleting a term removes its translations by termId alone, so clear every language then
+				Translator::clearDatabaseTranslation($term->getTerm(), empty($this->languageId) ? null : (int)$this->languageId);
+			}
+		}
+	}
 }

@@ -722,10 +722,10 @@ class Browse_AJAX extends JSON_Action {
 
 					$result['searchUrl'] = $searchObject->renderSearchUrl();
 
-					//TODO: Check if last page
-					$searchObject->setPage($pageToLoad + 1);
-					if (method_exists($searchObject, 'getBrowseRecordHTML')) {
-						$preloadedRecords = $searchObject->getBrowseRecordHTML();
+					//The search already knows how many results there are. This used to render the same page of records a
+					//second time without running a new search, which doubled the cost and never found the last page.
+					if ($searchObject->getResultTotal() <= $pageToLoad * self::ITEMS_PER_PAGE) {
+						$lastPage = true;
 					}
 
 					// Shutdown the search object

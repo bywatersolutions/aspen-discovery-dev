@@ -5,6 +5,20 @@ require_once ROOT_DIR . '/sys/MemoryCache/CachedValue.php';
 class Memcache {
 	private bool $enableDbCache = true;
 	private array $vars = [];
+	private bool $enableSharedMemory;
+	private string $sharedMemoryPrefix;
+
+	//Shared memory entries are rebuilt at least this often, so changes made where this server's shared memory cannot be
+	//cleared (cron, the indexer, or another web server for the same site) still show up
+	const MAX_SHARED_MEMORY_SECONDS = 300;
+
+	public function __construct() {
+		//APCu is shared by every PHP worker on the server, so a value one request loads saves the database query for the rest
+		$this->enableSharedMemory = function_exists('apcu_enabled') && apcu_enabled();
+		//One server can run several Aspen sites with their own databases, so keep each site's entries apart
+		global $serverName;
+		$this->sharedMemoryPrefix = 'aspen_' . ($serverName ?? 'default') . '_';
+	}
 
 	public function __destruct() {
 		//Clear old expired memory cache entries.  This can be done VERY sporadically.
@@ -128,6 +142,65 @@ class Memcache {
 			} catch (Exception) {
 				//Table has not been created ignore
 			}
+		}
+	}
+
+	/**
+	 * Get a value kept only in shared memory (never the database), building it with $loader on a miss.
+	 * Without APCu the value lives for the current request only, which is how Aspen behaved before.
+	 * A loader result of false is not shared, so something that does not exist yet is looked up again.
+	 * Shared memory belongs to one web server, so clearing an entry does not reach other servers for the same site.
+	 * Only use this for data where being up to $timeout seconds out of date on those is acceptable.
+	 *
+	 * @param int $timeout Seconds to keep the value, capped at MAX_SHARED_MEMORY_SECONDS
+	 */
+	public function getFromSharedMemory(string $name, int $timeout, callable $loader) : mixed {
+		if (array_key_exists($name, $this->vars)) {
+			return $this->vars[$name];
+		}
+		if (!$this->fetchFromSharedMemory($name, $value)) {
+			$value = $loader();
+			if ($value !== false) {
+				$this->storeInSharedMemory($name, $value, $timeout);
+			}
+		}
+		$this->vars[$name] = $value;
+		return $value;
+	}
+
+	//Entries from getFromSharedMemory() are never written to the database, so clearing them should not cost a query
+	public function deleteFromSharedMemory(string $name) : void {
+		unset($this->vars[$name]);
+		if ($this->enableSharedMemory) {
+			apcu_delete($this->sharedMemoryPrefix . $name);
+		}
+	}
+
+	public function isSharedMemoryEnabled() : bool {
+		return $this->enableSharedMemory;
+	}
+
+	private function fetchFromSharedMemory(string $name, &$value) : bool {
+		if (!$this->enableSharedMemory) {
+			return false;
+		}
+		$found = false;
+		$value = apcu_fetch($this->sharedMemoryPrefix . $name, $found);
+		return $found;
+	}
+
+	private function storeInSharedMemory(string $name, $value, int $timeout) : bool {
+		if (!$this->enableSharedMemory) {
+			return false;
+		}
+		if ($timeout <= 0 || $timeout > self::MAX_SHARED_MEMORY_SECONDS) {
+			$timeout = self::MAX_SHARED_MEMORY_SECONDS;
+		}
+		try {
+			return apcu_store($this->sharedMemoryPrefix . $name, $value, $timeout);
+		} catch (Throwable) {
+			//Objects that hold a database handle cannot be serialized, those just are not shared
+			return false;
 		}
 	}
 }

@@ -147,7 +147,15 @@ try {
 		}
 
 		$userAgent->userAgent = $userAgentString;
-		if ($userAgent->find(true)) {
+		//Every request looks its user agent up, but the row only changes when an administrator edits it, see UserAgent::clearCachedData()
+		global $memCache;
+		$savedUserAgent = $memCache->getFromSharedMemory('user_agent_' . md5($userAgentString), Memcache::MAX_SHARED_MEMORY_SECONDS, function () use ($userAgent) {
+			return $userAgent->find(true) ? ['id' => $userAgent->id, 'isBot' => $userAgent->isBot, 'blockAccess' => $userAgent->blockAccess] : false;
+		});
+		if ($savedUserAgent !== false) {
+			$userAgent->id = $savedUserAgent['id'];
+			$userAgent->isBot = $savedUserAgent['isBot'];
+			$userAgent->blockAccess = $savedUserAgent['blockAccess'];
 			$userAgentId = $userAgent->id;
 		}else{
 			$userAgentToInsert = new UserAgent();
@@ -167,11 +175,24 @@ try {
 		$usageByUserAgent->month = date('n');
 		global $aspenUsage;
 		$usageByUserAgent->instance = $aspenUsage->getInstance();
+		//Nearly every request counts against the same row, so add the counts up in shared memory when it is available
+		require_once ROOT_DIR . '/sys/SystemLogging/BufferedUsageCounters.php';
+		$countedInSharedMemory = BufferedUsageCounters::isAvailable() && !empty($userAgentId);
+		if ($countedInSharedMemory) {
+			BufferedUsageCounters::add('usage_by_user_agent', [
+				'userAgentId' => $userAgentId,
+				'year' => (int)date('Y'),
+				'month' => (int)date('n'),
+				'instance' => $aspenUsage->getInstance(),
+			], $userAgent->blockAccess ? 'numBlockedRequests' : 'numRequests');
+		}
 		// Attempts to load an existing row from usage_by_user_agent that matches the index userAgentId.
-		$foundExisting = $usageByUserAgent->find(true);
+		$foundExisting = !$countedInSharedMemory && $usageByUserAgent->find(true);
 
 		if ($userAgent->blockAccess) {
-			if ($foundExisting) {
+			if ($countedInSharedMemory) {
+				//Counted above
+			} elseif ($foundExisting) {
 				$updateResult = $usageByUserAgent->incrementNumBlockedRequests();
 				if ($updateResult === false) {
 					$logger->log("Could not update blocked user agent usage", Logger::LOG_ERROR);
@@ -188,7 +209,9 @@ try {
 			echo("<h1>Forbidden</h1><p><strong>We are unable to handle your request.</strong></p>");
 			die();
 		}else{
-			if ($foundExisting) {
+			if ($countedInSharedMemory) {
+				//Counted above
+			} elseif ($foundExisting) {
 				$updateResult = $usageByUserAgent->incrementNumRequests();
 				if ($updateResult === false) {
 					$logger->log("Could not update user agent usage", Logger::LOG_ERROR);
@@ -216,7 +239,11 @@ $usageByIPAddress->ipAddress = IPAddress::getClientIP();
 $usageByIPAddress->instance = $aspenUsage->getInstance();
 
 try {
-	$usageByIPAddress->find(true);
+	//The row is only used by the spam checks, and the table is emptied when IP tracking is turned off
+	$systemVariables = SystemVariables::getSystemVariables();
+	if ($systemVariables && $systemVariables->trackIpAddresses) {
+		$usageByIPAddress->find(true);
+	}
 } catch (Exception $e) {
 	//Table has not been created yet, ignore it
 }

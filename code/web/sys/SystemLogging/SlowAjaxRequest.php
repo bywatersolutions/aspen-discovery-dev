@@ -26,17 +26,8 @@ class SlowAjaxRequest extends DataObject {
 	}
 
 	function setSlowness(float $elapsedTime) : void {
-		if ($elapsedTime < 0.5) {
-			$this->timesFast++;
-		} elseif ($elapsedTime < 1) {
-			$this->timesAcceptable++;
-		} elseif ($elapsedTime < 2) {
-			$this->timesSlow++;
-		} elseif ($elapsedTime < 4) {
-			$this->timesSlower++;
-		} else {
-			$this->timesVerySlow++;
-		}
+		require_once ROOT_DIR . '/sys/SystemLogging/SlowPage.php';
+		$this->{SlowPage::getSlownessColumn($elapsedTime)}++;
 	}
 
 	public function okToExport(array $selectedFilters): bool {

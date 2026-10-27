@@ -23,16 +23,22 @@ class SlowPage extends DataObject {
 	}
 
 	function setSlowness(float $elapsedTime) : void {
+		$column = SlowPage::getSlownessColumn($elapsedTime);
+		$this->__set($column, ++$this->$column);
+	}
+
+	//Pages and AJAX requests are counted in the same buckets
+	static function getSlownessColumn(float $elapsedTime) : string {
 		if ($elapsedTime < 0.5) {
-			$this->__set('timesFast', ++$this->timesFast);
+			return 'timesFast';
 		} elseif ($elapsedTime < 1) {
-			$this->__set('timesAcceptable', ++$this->timesAcceptable);
+			return 'timesAcceptable';
 		} elseif ($elapsedTime < 2) {
-			$this->__set('timesSlow', ++$this->timesSlow);
+			return 'timesSlow';
 		} elseif ($elapsedTime < 4) {
-			$this->__set('timesSlower', ++$this->timesSlower);
+			return 'timesSlower';
 		} else {
-			$this->__set('timesVerySlow', ++$this->timesVerySlow);
+			return 'timesVerySlow';
 		}
 	}
 

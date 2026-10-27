@@ -235,6 +235,17 @@ class AspenUsage extends AbstractUsage {
 			return false;
 		}
 		$this->$fieldName += $amount;
+		//Every request on the site adds to today's one row, so add the counts up in shared memory when it is available
+		require_once ROOT_DIR . '/sys/SystemLogging/BufferedUsageCounters.php';
+		if (BufferedUsageCounters::isAvailable()) {
+			BufferedUsageCounters::add('aspen_usage', [
+				'instance' => $this->instance,
+				'year' => (int)$this->year,
+				'month' => (int)$this->month,
+				'day' => (int)$this->day,
+			], $fieldName, $amount);
+			return true;
+		}
 		try {
 			//The unique key on ( instance, year, month, day ) lets one statement create today's row or add to it if
 			//another request got there first, so concurrent requests can't lose counts or duplicate the row

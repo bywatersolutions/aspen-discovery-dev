@@ -58,4 +58,11 @@ class UserAgent extends DataObject {
 	public function objectHistoryEnabled(): bool {
 		return false;
 	}
+
+	protected function clearCachedData() : void {
+		global $memCache;
+		if (!empty($this->userAgent)) {
+			$memCache->deleteFromSharedMemory('user_agent_' . md5($this->userAgent));
+		}
+	}
 }

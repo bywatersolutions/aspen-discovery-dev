@@ -990,7 +990,27 @@ $memoryWatcher->writeMemory();
 try {
 	$elapsedTime = $timer->getElapsedTime();
 
-	if (!BotChecker::isRequestFromBot()) {
+	require_once ROOT_DIR . '/sys/SystemLogging/SlowPage.php';
+	require_once ROOT_DIR . '/sys/SystemLogging/BufferedUsageCounters.php';
+	if (!BotChecker::isRequestFromBot() && BufferedUsageCounters::isAvailable()) {
+		//The busiest pages share a row, so add the counts up in shared memory rather than rewriting the row on every request
+		if ($isAJAX) {
+			BufferedUsageCounters::add('slow_ajax_request', [
+				'year' => (int)date('Y'),
+				'month' => (int)date('n'),
+				'module' => $module,
+				'action' => $action,
+				'method' => (isset($_GET['method']) && !is_array($_GET['method'])) ? $_GET['method'] : '',
+			], SlowPage::getSlownessColumn($elapsedTime));
+		} else {
+			BufferedUsageCounters::add('slow_page', [
+				'year' => (int)date('Y'),
+				'month' => (int)date('n'),
+				'module' => $module,
+				'action' => $action,
+			], SlowPage::getSlownessColumn($elapsedTime));
+		}
+	} elseif (!BotChecker::isRequestFromBot()) {
 		if ($isAJAX) {
 			require_once ROOT_DIR . '/sys/SystemLogging/SlowAjaxRequest.php';
 			$slowRequest = new SlowAjaxRequest();

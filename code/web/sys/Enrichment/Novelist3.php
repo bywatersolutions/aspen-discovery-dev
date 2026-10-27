@@ -6,14 +6,8 @@ require_once ROOT_DIR . '/sys/CurlWrapper.php';
 class Novelist3 {
 
 	function doesGroupedWorkHaveCachedSeries($groupedRecordId) : bool {
-		$novelistData = new NovelistData();
 		if ($groupedRecordId != null && $groupedRecordId != '') {
-			$novelistData->groupedRecordPermanentId = $groupedRecordId;
-			if ($novelistData->find(true)) {
-				return true;
-			} else {
-				return false;
-			}
+			return NovelistData::getForGroupedWork($groupedRecordId) != null;
 		} else {
 			return false;
 		}

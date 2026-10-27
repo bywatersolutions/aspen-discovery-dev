@@ -700,9 +700,11 @@ class GroupedWorkDriver extends IndexRecordDriver {
 
 		//Check to see if we already have NovelistData loaded with a primary ISBN
 		require_once ROOT_DIR . '/sys/Enrichment/NovelistData.php';
-		$novelistData = new NovelistData();
-		$novelistData->groupedRecordPermanentId = $this->getPermanentId();
-		if (!isset($_REQUEST['reload']) && $this->getPermanentId() != null && $this->getPermanentId() != '' && $novelistData->find(true) && $novelistData->primaryISBN != null) {
+		$novelistData = null;
+		if (!isset($_REQUEST['reload']) && $this->getPermanentId() != null && $this->getPermanentId() != '') {
+			$novelistData = NovelistData::getForGroupedWork($this->getPermanentId());
+		}
+		if ($novelistData != null && $novelistData->primaryISBN != null) {
 			return $novelistData->primaryISBN;
 		} else {
 			// Get all the ISBNs and initialize the return value:
@@ -921,7 +923,8 @@ class GroupedWorkDriver extends IndexRecordDriver {
 	}
 
 	private ?string $cachedDescription = null;
-	private ?GroupedWorkDisplayInfo $cachedDisplayInfo = null;
+	//false until loaded, so works without display info are not looked up again
+	private GroupedWorkDisplayInfo|false|null $cachedDisplayInfo = false;
 
 	/**
 	 * Get the description for this grouped work with full enrichment logic.
@@ -984,7 +987,7 @@ class GroupedWorkDriver extends IndexRecordDriver {
 	}
 
 	private function getDisplayInfo(): ?GroupedWorkDisplayInfo {
-		if ($this->cachedDisplayInfo == null) {
+		if ($this->cachedDisplayInfo === false) {
 			$this->cachedDisplayInfo = $this->getSpecifiedDisplayInfo();
 		}
 		return $this->cachedDisplayInfo;
@@ -3211,6 +3214,8 @@ class GroupedWorkDriver extends IndexRecordDriver {
 	static false|int|string $atNearbyLocation2 = false;
 	static false|int|string $homeLocationScopeId = false;
 
+	private static array $scopeIdsByName = [];
+
 	private function loadRelatedRecords(): void {
 		global $timer;
 		if ($this->relatedRecords == null || isset($_REQUEST['reload'])) {
@@ -3323,17 +3328,20 @@ class GroupedWorkDriver extends IndexRecordDriver {
 			require_once ROOT_DIR . '/sys/Grouping/Variation.php';
 			require_once ROOT_DIR . '/sys/Grouping/Record.php';
 			require_once ROOT_DIR . '/sys/Grouping/Item.php';
-			$groupedWork = new GroupedWork();
-			$groupedWork->permanent_id = $this->getUniqueID();
-			if (!empty($groupedWork->permanent_id) && $groupedWork->find(true)) {
+			$groupedWork = $this->getGroupedWorkObject();
+			if ($groupedWork != null) {
 				global $aspen_db;
-				//Get the scopeId for the active scope
-				$scopeIdQuery = "SELECT id from scope where name = '$solrScope'";
-				$scopeId = -1;
-				$results = $aspen_db->query($scopeIdQuery, PDO::FETCH_ASSOC);
-				if ($scopeResults = $results->fetch()) {
-					$scopeId = $scopeResults['id'];
+				//Get the scopeId for the active scope, it is the same for every title on the page
+				$scopeName = (string)$solrScope;
+				if (!array_key_exists($scopeName, GroupedWorkDriver::$scopeIdsByName)) {
+					$scopeIdQuery = "SELECT id from scope where name = '$solrScope'";
+					GroupedWorkDriver::$scopeIdsByName[$scopeName] = -1;
+					$results = $aspen_db->query($scopeIdQuery, PDO::FETCH_ASSOC);
+					if ($scopeResults = $results->fetch()) {
+						GroupedWorkDriver::$scopeIdsByName[$scopeName] = $scopeResults['id'];
+					}
 				}
+				$scopeId = GroupedWorkDriver::$scopeIdsByName[$scopeName];
 
 				//Get the ids of all the variations, records, and items attached to the work
 				$databaseIds = $this->getVariationRecordAndItemIdsFromDB($scopeId, $groupedWork->id, true);
@@ -3368,20 +3376,26 @@ class GroupedWorkDriver extends IndexRecordDriver {
 
 				$this->preloadRequiredDataForActions($allRecordIdsBySource, $allRecordIdsWithSource);
 
+				//Get the variations every record is attached to with one query rather than one per record
+				$variationIdsByRecordId = [];
+				if (count($records) > 0) {
+					$recordIdList = implode(',', array_map('intval', array_column($records, 'id')));
+					$itemQuery = "SELECT groupedWorkRecordId, groupedWorkVariationId from grouped_work_record_items WHERE groupedWorkRecordId IN ($recordIdList) ORDER BY groupedWorkRecordId, id";
+					$res = $aspen_db->query($itemQuery, PDO::FETCH_ASSOC);
+					foreach ($res->fetchAll() as $item) {
+						$variationIdsByRecordId[$item['groupedWorkRecordId']][] = $item['groupedWorkVariationId'];
+					}
+					$res->closeCursor();
+				}
+
 				//Load all records
 				/** @var Grouping_Record[] $allRecords */
 				$allRecords = [];
 				foreach ($records as $record) {
 
 					//Get all the variations that the record should be attached to
-					$itemQuery = "SELECT groupedWorkVariationId from grouped_work_record_items WHERE groupedWorkRecordId = {$record['id']}";
-					$res = $aspen_db->query($itemQuery, PDO::FETCH_ASSOC);
-					$allItems = $res->fetchAll();
-					$res->closeCursor();
-
 					$recordVariations = [];
-					foreach ($allItems as $item) {
-						$thisVariation = $item['groupedWorkVariationId'];
+					foreach ($variationIdsByRecordId[$record['id']] ?? [] as $thisVariation) {
 						foreach ($allVariations as $variation) {
 							if ($thisVariation == $variation->databaseId) {
 								$recordVariations[$variation->manifestation->format] = $variation;
@@ -3411,6 +3425,21 @@ class GroupedWorkDriver extends IndexRecordDriver {
 
 				$scopedItems = $this->getRawItemDataFromDB($databaseIds['uniqueItemIds']);
 
+				//Get the local urls for every item with one query rather than one per item
+				$localUrlsByItemId = [];
+				if (count($scopedItems) > 0) {
+					$itemIdList = implode(',', array_map('intval', array_column($scopedItems, 'groupedWorkItemId')));
+					$itemUrlQuery = "SELECT groupedWorkItemId, url from grouped_work_record_item_url where groupedWorkItemId IN ($itemIdList) AND (scopeId = -1 OR scopeId = $scopeId) ORDER BY scopeId desc";
+					$results = $aspen_db->query($itemUrlQuery, PDO::FETCH_ASSOC);
+					foreach ($results->fetchAll() as $itemUrl) {
+						//The url for the active scope sorts ahead of the one for all scopes, so keep the first one for each item
+						if (!array_key_exists($itemUrl['groupedWorkItemId'], $localUrlsByItemId)) {
+							$localUrlsByItemId[$itemUrl['groupedWorkItemId']] = $itemUrl['url'];
+						}
+					}
+					$results->closeCursor();
+				}
+
 				foreach ($scopedItems as $scopedItem) {
 					//Get the variation for the item
 					$relatedVariation = $allVariations[$scopedItem['groupedWorkVariationId']];
@@ -3427,14 +3456,9 @@ class GroupedWorkDriver extends IndexRecordDriver {
 								$scopedItem['dueDateFormat'] = $indexingProfile->dueDateFormat;
 							}
 						}
-						//Look for urls for the item
-						$itemUrlQuery = "SELECT url from grouped_work_record_item_url where groupedWorkItemId = {$scopedItem['groupedWorkItemId']} AND (scopeId = -1 OR scopeId = $scopeId) ORDER BY scopeId desc limit 1";
-						$results = $aspen_db->query($itemUrlQuery, PDO::FETCH_ASSOC);
-						$itemUrls = $results->fetchAll();
-						if (count($itemUrls) > 0) {
-							$scopedItem['localUrl'] = $itemUrls[0]['url'];
+						if (array_key_exists($scopedItem['groupedWorkItemId'], $localUrlsByItemId)) {
+							$scopedItem['localUrl'] = $localUrlsByItemId[$scopedItem['groupedWorkItemId']];
 						}
-						$results->closeCursor();
 						$itemData = new Grouping_Item($scopedItem, $searchLocation, GroupedWorkDriver::$activeLocationScopeId, GroupedWorkDriver::$mainLocationScopeId, GroupedWorkDriver::$homeLocationScopeId, GroupedWorkDriver::$userNearbyLocation1ScopeId, GroupedWorkDriver::$userNearbyLocation2ScopeId, GroupedWorkDriver::$atNearbyLocation1, GroupedWorkDriver::$atNearbyLocation2);
 						$relatedRecord->addItem($itemData);
 					}

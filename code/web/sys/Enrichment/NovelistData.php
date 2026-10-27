@@ -13,6 +13,22 @@ class NovelistData extends DataObject {
 	public $volume;
 
 	public $lastUpdate;
+
+	private static array $_novelistDataForWorks = [];
+
+	//Search results look each title up twice (for its ISBN and to see if it has a series), so remember the answer for the request
+	public static function getForGroupedWork(string $groupedRecordPermanentId) : ?NovelistData {
+		if (!array_key_exists($groupedRecordPermanentId, self::$_novelistDataForWorks)) {
+			$novelistData = new NovelistData();
+			$novelistData->groupedRecordPermanentId = $groupedRecordPermanentId;
+			self::$_novelistDataForWorks[$groupedRecordPermanentId] = $novelistData->find(true) ? $novelistData : null;
+		}
+		return self::$_novelistDataForWorks[$groupedRecordPermanentId];
+	}
+
+	protected function clearCachedData() : void {
+		unset(self::$_novelistDataForWorks[$this->groupedRecordPermanentId]);
+	}
 	public $jsonResponse;
 	private $_jsonData = null;
 

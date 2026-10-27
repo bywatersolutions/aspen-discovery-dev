@@ -7290,7 +7290,8 @@ class Library extends DataObject {
 	}
 
 	public function getAccountProfile() : false|AccountProfile {
-		if ($this->_accountProfile == null) {
+		//=== so a profile that was not found (false) is remembered instead of looked up again on every call
+		if ($this->_accountProfile === null) {
 			if (!empty($this->accountProfileId)) {
 				$accountProfile = new AccountProfile();
 				$accountProfile->id = $this->accountProfileId;

@@ -2514,6 +2514,13 @@ abstract class SearchObject_BaseSearcher {
 			//rerun the search
 			$s = new SearchEntry();
 			$s->id = $_REQUEST['searchId'];
+			//Only re-run searches made in this session or by this user. Result links carry the searchId, so without this
+			//anyone following a shared or crawled link made the record page run someone else's whole search again.
+			$searchOwner = 'session_id = ' . $s->escape(session_id());
+			if (UserAccount::isLoggedIn()) {
+				$searchOwner .= ' OR user_id = ' . (int)UserAccount::getActiveUserId();
+			}
+			$s->whereAdd("($searchOwner)");
 			$interface->assign('searchId', $_REQUEST['searchId']);
 			$currentPage = isset($_REQUEST['page']) && ctype_digit($_REQUEST['page']) ? $_REQUEST['page'] : 1;
 			$interface->assign('page', $currentPage);

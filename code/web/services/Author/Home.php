@@ -9,6 +9,8 @@ class Author_Home extends ResultsAction {
 	function launch(): void {
 		global $interface;
 		global $library;
+		//Author pages are searches too, see Search_Results::launch()
+		$interface->assign('robotsMeta', 'noindex, follow');
 
 		$interface->assign('ipDebugEnabled', IPAddress::showDebuggingInformation());
 

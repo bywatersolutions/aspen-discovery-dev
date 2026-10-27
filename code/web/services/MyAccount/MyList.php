@@ -292,6 +292,10 @@ class MyAccount_MyList extends MyAccount {
 		//Determine the page size
 		if (isset($_REQUEST['pageSize']) && (is_numeric($_REQUEST['pageSize']))) {
 			$defaultPageSize = $_REQUEST['pageSize'];
+			//Every title on the page loads its records, so visitors who are not logged in get at most 100 per page
+			if ($userObj === false) {
+				$defaultPageSize = min(max((int)$defaultPageSize, 1), 100);
+			}
 			if ($userObj !== false) {
 				PageDefaults::updatePageDefaultsForUser($userObj->id, 'MyAccount', 'MyList', $list->id, $defaultPageSize, null, null);
 			}

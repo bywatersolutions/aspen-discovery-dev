@@ -128,6 +128,8 @@ class Series_Home extends Action {
 		}
 
 		$recordsPerPage = isset($_REQUEST['pageSize']) && (is_numeric($_REQUEST['pageSize'])) ? $_REQUEST['pageSize'] : 20;
+		//Every title on the page loads its records, so do not let a request ask for all of them at once
+		$recordsPerPage = min(max((int)$recordsPerPage, 1), 100);
 		$totalRecords = $list->numScopedTitlesInSeries();
 		$page = $_REQUEST['page'] ?? 1;
 		$startRecord = ($page - 1) * $recordsPerPage;

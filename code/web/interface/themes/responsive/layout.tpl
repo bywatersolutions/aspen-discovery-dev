@@ -5,6 +5,9 @@
 		<title>{$pageTitleShortAttribute|truncate:64:"..."}{if empty($isMobile)} | {$librarySystemName|escape}{/if}</title>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		{if !empty($robotsMeta)}
+			<meta name="robots" content="{$robotsMeta}">
+		{/if}
 		<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
 		{if !empty($google_verification_key)}
 			<meta name="google-site-verification" content="{$google_verification_key}">

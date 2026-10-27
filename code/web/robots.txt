@@ -57,6 +57,16 @@ Disallow: /cgi-bin/
 Disallow: /images/fiveStar/
 Disallow: /bookcover.php
 Disallow: /GroupedWork/*/Home?*
+Disallow: /Search/Results?filter
+Disallow: /Search/Results?*&filter
+Disallow: /Search/Results?*&sort=
+Disallow: /Search/Results?*&page=
+Disallow: /Author/Home?*&filter
+Disallow: /Author/Home?*&sort=
+Disallow: /Author/Home?*&page=
+Disallow: /Browse/AJAX
+Disallow: /Series/AJAX
+Disallow: /Union/
 
 User-agent: SemrushBot
 Disallow: /

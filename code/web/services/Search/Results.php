@@ -10,6 +10,9 @@ class Search_Results extends ResultsAction {
 
 	function launch() : void {
 		global $interface;
+		//Every combination of terms, facets, sorts and pages is a new results page, so keep them out of search engine
+		//indexes while still letting crawlers follow links through to the records
+		$interface->assign('robotsMeta', 'noindex, follow');
 
 		// If redirected from a grouped work search, pass the original search URL to the template.
 		if (!empty($_REQUEST['seriesRedirectedFrom'])) {

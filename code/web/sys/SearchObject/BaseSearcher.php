@@ -1089,6 +1089,12 @@ abstract class SearchObject_BaseSearcher {
 		if ($this->page < 1) {
 			$this->page = 1;
 		}
+		//Solr has to collect every result ahead of a deep page, so visitors who are not logged in stop at page 100 (2,000 titles).
+		//API clients such as LiDA page through results without a session, so they are left alone.
+		global $module;
+		if ($this->page > 100 && $module != 'API' && !UserAccount::isLoggedIn()) {
+			$this->page = 100;
+		}
 	}
 
 	function setPage($page) {

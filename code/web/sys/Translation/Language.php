@@ -170,11 +170,12 @@ class Language extends DataObject {
 	}
 
 	public static function getDefaultLanguageCode(): string {
+		//The valid languages are already loaded, so look for the default there instead of querying for it again
 		$validLanguages = self::getValidLanguages();
-		$language = new Language();
-		$language->isDefault = 1;
-		if ($language->find(true) && isset($validLanguages[$language->code])) {
-			return $language->code;
+		foreach ($validLanguages as $code => $language) {
+			if ($language->isDefault) {
+				return $code;
+			}
 		}
 		return array_key_first($validLanguages) ?? 'en';
 	}

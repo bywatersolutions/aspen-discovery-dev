@@ -12,6 +12,17 @@ class GoogleApiSetting extends DataObject {
 
 	public $_libraryGoogleAnalytics;
 
+	private static GoogleApiSetting|false|null $_settings = null;
+
+	//The interface, analytics and translation all need these settings on every page, so only load them once
+	public static function getSettings() : GoogleApiSetting|false {
+		if (self::$_settings === null) {
+			$googleSettings = new GoogleApiSetting();
+			self::$_settings = $googleSettings->find(true) ? $googleSettings : false;
+		}
+		return self::$_settings;
+	}
+
 	static $_objectStructure = [];
 	static function getObjectStructure(string $context = ''): array {
 		if (isset(self::$_objectStructure[$context])) {

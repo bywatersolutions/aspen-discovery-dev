@@ -3533,4 +3533,10 @@ class Location extends DataObject {
 		}
 		return $this->_cloudSourceSettingId;
 	}
+
+	protected function clearCachedData() : void {
+		//Subdomains, codes and hosts make up the list of valid server names checked on every request
+		global $memCache;
+		$memCache->deleteFromSharedMemory('valid_server_names');
+	}
 }

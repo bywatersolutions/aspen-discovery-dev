@@ -149,8 +149,8 @@ try {
 
 	if (empty($library->cookieStorageConsent) || (!empty($library->cookieStorageConsent) && $analyticsPref == 1)){
 		require_once ROOT_DIR . '/sys/Enrichment/GoogleApiSetting.php';
-		$googleSettings = new GoogleApiSetting();
-		if ($googleSettings->find(true)) {
+		$googleSettings = GoogleApiSetting::getSettings();
+		if ($googleSettings) {
 
 			//Check to see if we have library specific settings
 			global $library;
@@ -223,7 +223,11 @@ if (!$isPluginAction) {
 	checkForMaliciouslyFormattedParameters();
 }
 
-checkForTooManyFailedLogins();
+//Only login attempts need the failed login checks, which saves two queries on every other request and stops
+//the 10 second delay from tying up a worker for anything else an address requests
+if (!empty($_REQUEST['username']) || !empty($_REQUEST['password']) || isset($_REQUEST['casLogin'])) {
+	checkForTooManyFailedLogins();
+}
 
 if (isset($_REQUEST['q']) && !isset($_REQUEST['lookfor'])) {
 	$_REQUEST['lookfor'] = $_REQUEST['q'];

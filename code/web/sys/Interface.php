@@ -34,8 +34,8 @@ class UInterface extends Smarty {
 		//Figure out google translate id
 		try {
 			require_once ROOT_DIR . '/sys/Enrichment/GoogleApiSetting.php';
-			$googleSettings = new GoogleApiSetting();
-			if ($googleSettings->find(true)) {
+			$googleSettings = GoogleApiSetting::getSettings();
+			if ($googleSettings) {
 				//Get all images related to the event
 				if (!empty($googleSettings->googleMapsKey)) {
 					$this->assign('mapsKey', $googleSettings->googleMapsKey);

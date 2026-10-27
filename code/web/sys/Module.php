@@ -93,4 +93,9 @@ class Module extends DataObject {
 		self::$_objectStructure[$context] = $structure;
 		return self::$_objectStructure[$context];
 	}
+
+	protected function clearCachedData() : void {
+		global $memCache;
+		$memCache->deleteFromSharedMemory('enabled_modules');
+	}
 }

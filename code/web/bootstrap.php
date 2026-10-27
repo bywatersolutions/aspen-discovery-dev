@@ -132,8 +132,8 @@ if (isset($_SERVER['HTTP_USER_AGENT'])) {
 }
 try {
 	// Check if user agent tracking is disabled
-	$systemVariables = new SystemVariables();
-	$trackingEnabled = !($systemVariables->find(true) && $systemVariables->disable_user_agent_logging);
+	$systemVariables = SystemVariables::getSystemVariables();
+	$trackingEnabled = !($systemVariables && $systemVariables->disable_user_agent_logging);
 
 	if ($trackingEnabled) {
 		$userAgent = new UserAgent();
@@ -242,16 +242,20 @@ if (IPAddress::showDebuggingInformation()) {
 }
 
 global $enabledModules;
-$enabledModules = [];
-try {
-	$aspenModule = new Module();
-	$aspenModule->selectAdd();
-	$aspenModule->selectAdd('name');
-	$aspenModule->enabled = true;
-	$enabledModules = $aspenModule->fetchAll('name', 'name');
-} catch (Exception $e) {
-	//Modules are not installed yet
-}
+global $memCache;
+//Read on every request but only changed by an administrator, see Module::clearCachedData()
+$enabledModules = $memCache->getFromSharedMemory('enabled_modules', Memcache::MAX_SHARED_MEMORY_SECONDS, function () {
+	try {
+		$aspenModule = new Module();
+		$aspenModule->selectAdd();
+		$aspenModule->selectAdd('name');
+		$aspenModule->enabled = true;
+		return $aspenModule->fetchAll('name', 'name');
+	} catch (Exception $e) {
+		//Modules are not installed yet. false is not shared, so a failed lookup is not remembered for other requests.
+		return false;
+	}
+}) ?: [];
 
 if (array_key_exists('Community Engagement', $enabledModules)) {
 	require_once ROOT_DIR . '/sys/CommunityEngagement/action-hooks.php';
@@ -374,11 +378,18 @@ function array_remove_by_value($array, $value) {
 }
 
 function getValidServerNames(): array {
-	//Don't cache for now since server names get long
-	/* Memcache $memCache */ //global $memCache;
-	//$validServerNames = $memCache->get('validServerNames');
+	//The list is too long for the database cache but fine in shared memory, which saves four queries on every request.
+	//Saving a library, location or host clears it.
+	global $memCache;
+	if (isset($_REQUEST['reload'])) {
+		$memCache->deleteFromSharedMemory('valid_server_names');
+	}
+	return $memCache->getFromSharedMemory('valid_server_names', Memcache::MAX_SHARED_MEMORY_SECONDS, 'loadValidServerNames');
+}
+
+function loadValidServerNames(): array {
 	$validServerNames = null;
-	if (empty($validServerNames) || isset($_REQUEST['reload'])) {
+	if (empty($validServerNames)) {
 		//Get a list of valid server names
 		global $instanceName;
 		global $configArray;
@@ -453,7 +464,6 @@ function getValidServerNames(): array {
 				$validServerNames[] = "$host";
 			}
 		}
-		//$memCache->set('validServerNames', $validServerNames, 5 * 60 * 60);
 	}
 	return $validServerNames;
 }

@@ -58,9 +58,13 @@ RUN apt -y update \
 	  php-ssh2 \
 	  php-ldap \
 	  php-mysql \
+	  php-apcu \
 	&& rm -rf /var/cache/apt/archives/* \
 	&& rm -rf /var/lib/apt/lists/*
 
+
+# Aspen keeps settings, translations and cover markers in APCu, size it for that rather than the 32M default
+RUN echo 'apc.shm_size=256M' > /etc/php/8.4/fpm/conf.d/99-aspen-apcu.ini
 
 # Enable required Apache modules
 RUN a2enmod proxy_fcgi setenvif rewrite

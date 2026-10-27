@@ -1988,7 +1988,12 @@ abstract class SearchObject_BaseSearcher {
 		$this->endTime = $mtime[1] + $mtime[0];
 		$this->totalTime = $this->endTime - $this->initTime;
 
-		if (!$this->disableLogging) {
+		//Sessions for crawlers that are not logged in are not saved, so their search history could never be used. Skipping it saves
+		//a search row per request, and leaves searchId off the result links so following them does not re-run the search.
+		//API clients are left alone since they can use the searchId they are sent.
+		global $module;
+		$isAnonymousCrawler = PHP_SAPI != 'cli' && $module != 'API' && BotChecker::isRequestFromBot() && !UserAccount::isLoggedIn();
+		if (!$this->disableLogging && !$isAnonymousCrawler) {
 			// Add to search history
 			$this->addToHistory();
 		}

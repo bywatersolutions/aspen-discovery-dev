@@ -105,7 +105,11 @@
 			if (Globals.timeUntilSessionExpiration > 0) {
 				setTimeout(function (){
 					// noinspection SillyAssignmentJS
-					window.location.reload();
+					{if $smarty.server.REQUEST_METHOD == 'POST'}
+						window.location.replace(window.location.href.split('#')[0]);
+					{else}
+						window.location.reload();
+					{/if}
 				}, Globals.timeUntilSessionExpiration + 500);
 			}
 		});
